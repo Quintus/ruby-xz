@@ -161,7 +161,7 @@ module XZ
   #Number of bytes read in one chunk.
   CHUNK_SIZE = 4096
   #The version of this library.
-  VERSION = "0.0.1".freeze
+  VERSION = "0.0.2-dev".freeze
   
   class << self
     
