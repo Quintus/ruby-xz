@@ -35,7 +35,7 @@ create and extract XZ-compressed archives. It can cope with big
 files as well as small ones, but doesn't offer much
 of the possibilities liblzma itself has.
 DESCRIPTION
-  spec.version = XZ::VERSION.dup #Without dup, RubyGems complains it can't modify it...?
+  spec.version = XZ::VERSION.gsub("-", ".")
   spec.author = "Marvin Gülker"
   spec.email = "sutniuq@gmx.net"
   spec.platform = Gem::Platform::RUBY

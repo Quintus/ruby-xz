@@ -24,6 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =end
 
+require "pathname"
 require "ffi"
 
 #The namespace and main module of this library. Each method of this module
@@ -161,7 +162,7 @@ module XZ
   #Number of bytes read in one chunk.
   CHUNK_SIZE = 4096
   #The version of this library.
-  VERSION = "0.0.2-dev".freeze
+  VERSION = Pathname.new(__FILE__).dirname.expand_path.parent.join("VERSION").read.chomp.freeze
   
   class << self
     
