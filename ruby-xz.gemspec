@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =end
 
-require_relative "lib/xz"
+require 'lib/xz'
 
 GEMSPEC = Gem::Specification.new do |spec|
   spec.name = "ruby-xz"
@@ -39,7 +39,7 @@ DESCRIPTION
   spec.author = "Marvin Gülker"
   spec.email = "sutniuq@gmx.net"
   spec.platform = Gem::Platform::RUBY
-  spec.required_ruby_version = ">=1.9"
+  spec.required_ruby_version = ">=1.8.7"
   spec.add_dependency("ffi")
   spec.add_development_dependency("hanna-nouveau")
   spec.files.concat(Dir["lib/**/*.rb"])
