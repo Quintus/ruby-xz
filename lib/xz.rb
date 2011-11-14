@@ -25,6 +25,7 @@ THE SOFTWARE.
 =end
 
 require "ffi"
+require 'stringio'
 
 #The namespace and main module of this library. Each method of this module
 #may raise exceptions of class XZ::LZMAError, which is not named in the
@@ -211,7 +212,7 @@ module XZ
       res = LibLZMA.lzma_stream_decoder(
         stream.pointer,
         memory_limit,
-        flags.inject(0){|val, flag| val | LibLZMA.const_get(:"LZMA_#{flag.upcase}")}
+        flags.inject(0){|val, flag| val | LibLZMA.const_get(:"LZMA_#{flag.to_s.upcase}")}
       )
       
       LZMAError.raise_if_necessary(res)
@@ -385,7 +386,11 @@ module XZ
     def binary_size(str)
       #Believe it or not, but this is faster than str.bytes.to_a.size.
       #I benchmarked it, and it is as twice as fast.
-      str.dup.force_encoding("BINARY").size
+      if str.respond_to? :force_encoding
+        str.dup.force_encoding("BINARY").size
+      else
+        str.bytes.to_a.size
+      end
     end
     
     #This method does the heavy work of (de-)compressing a stream. It takes
