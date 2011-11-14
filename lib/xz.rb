@@ -79,7 +79,7 @@ module XZ
                     :lzma_buf_error,
                     :lzma_prog_error
     
-    ffi_lib "liblzma"
+    ffi_lib ['lzma.so.2', 'lzma.so', 'lzma']
     
     attach_function :lzma_easy_encoder, [:pointer, :uint32, :int], :int
     attach_function :lzma_code, [:pointer, :int], :int
