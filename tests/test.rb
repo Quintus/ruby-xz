@@ -17,7 +17,7 @@ class TestXZ < Test::Unit::TestCase
 
   def test_compress
     tmp = XZ.compress('01234567890123456789')
-    assert_equal(tmp, $test_xz)
+    assert_equal(tmp[0, 5].bytes.to_a, "\3757zXZ".bytes.to_a)
   end
 
   def test_compress_file
@@ -31,7 +31,7 @@ class TestXZ < Test::Unit::TestCase
     XZ.compress_file(infile.path, outfile.path)
 
     outfile.open
-    assert_equal(outfile.read, $test_xz)
+    assert_equal(outfile.read[0, 5].bytes.to_a, "\3757zXZ".bytes.to_a)
     outfile.close
 
     infile.delete
