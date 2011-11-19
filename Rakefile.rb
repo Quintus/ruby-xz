@@ -29,6 +29,7 @@ gem "rdoc"
 require "rake"
 require "rubygems/package_task"
 require "rdoc/task"
+require "rake/testtask"
 
 load "ruby-xz.gemspec"
 
@@ -40,4 +41,8 @@ Rake::RDocTask.new do |rd|
   rd.main = "README.rdoc"
   rd.generator = "hanna" #Ignored if hanna-nouveau isn't installed
   rd.rdoc_dir = "doc"
+end
+
+Rake::TestTask.new do |t|
+  t.test_files = FileList["test/test_*.rb"]
 end
