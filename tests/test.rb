@@ -47,39 +47,35 @@ class TestXZ < Test::Unit::TestCase
   end
 
   def test_compress_file
-    infile = Tempfile.new('in')
-    infile.write('01234567890123456789')
-    infile.close
+    Tempfile.open('in') do |infile|
+      infile.write('01234567890123456789')
+      infile.close
 
-    outfile = Tempfile.new('out')
-    outfile.close
+      Tempfile.open('out') do |outfile|
+        outfile.close
 
-    XZ.compress_file(infile.path, outfile.path)
+        XZ.compress_file(infile.path, outfile.path)
 
-    outfile.open
-    assert_equal(outfile.read[0, 5].bytes.to_a, "\3757zXZ".bytes.to_a)
-    outfile.close
-
-    infile.delete
-    outfile.delete
+        outfile.open
+        assert_equal(outfile.read[0, 5].bytes.to_a, "\3757zXZ".bytes.to_a)
+      end
+    end
   end
 
   def test_decompress_file
-    infile = Tempfile.new('in')
-    infile.write(TEST_XZ)
-    infile.close
+    Tempfile.open('in') do |infile|
+      infile.write(TEST_XZ)
+      infile.close
 
-    outfile = Tempfile.new('out')
-    outfile.close
+      Tempfile.open('out') do |outfile|
+        outfile.close
 
-    XZ.decompress_file(infile.path, outfile.path)
+        XZ.decompress_file(infile.path, outfile.path)
 
-    outfile.open
-    assert_equal(outfile.read, '01234567890123456789')
-    outfile.close
-
-    infile.delete
-    outfile.delete
+        outfile.open
+        assert_equal(outfile.read, '01234567890123456789')
+      end
+    end
   end
 end
 
