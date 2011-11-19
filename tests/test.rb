@@ -36,12 +36,13 @@ else
   require File.join(File.expand_path(File.dirname(__FILE__)), '..', 'lib', 'xz')
 end
 
-TEST_XZ = "\3757zXZ\000\000\004\346\326\264F\002\000!\001\026\000\000\000t/" +
+class TestXZ < Test::Unit::TestCase
+  
+  TEST_XZ = "\3757zXZ\000\000\004\346\326\264F\002\000!\001\026\000\000\000t/" +
   "\345\243\340\000\023\000\020]\000\030\fB\222jg\274\016\32132a\326|\000\000" +
   "\000\017:\376\373\"1\270\266\000\001,\024\370\nm\003\037\266\363}\001\000" +
   "\000\000\000\004YZ"
-
-class TestXZ < Test::Unit::TestCase
+  
   def test_decompress
     assert_equal(XZ.decompress(TEST_XZ), '01234567890123456789')
   end
