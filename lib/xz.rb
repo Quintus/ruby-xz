@@ -4,6 +4,7 @@
 Basic liblzma-bindings for Ruby.
 
 Copyright © 2011 Marvin Gülker
+Copyright © 2011 Christoph Plank
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the ‘Software’),
@@ -25,6 +26,7 @@ THE SOFTWARE.
 =end
 
 require "ffi"
+require 'stringio'
 
 #The namespace and main module of this library. Each method of this module
 #may raise exceptions of class XZ::LZMAError, which is not named in the
@@ -77,7 +79,7 @@ module XZ
                     :lzma_buf_error,
                     :lzma_prog_error
     
-    ffi_lib "liblzma"
+    ffi_lib ['lzma.so.2', 'lzma.so', 'lzma']
     
     attach_function :lzma_easy_encoder, [:pointer, :uint32, :int], :int
     attach_function :lzma_code, [:pointer, :int], :int
@@ -161,7 +163,7 @@ module XZ
   #Number of bytes read in one chunk.
   CHUNK_SIZE = 4096
   #The version of this library.
-  VERSION = "0.0.1".freeze
+  VERSION = "0.0.2".freeze
   
   class << self
     
@@ -211,7 +213,7 @@ module XZ
       res = LibLZMA.lzma_stream_decoder(
         stream.pointer,
         memory_limit,
-        flags.inject(0){|val, flag| val | LibLZMA.const_get(:"LZMA_#{flag.upcase}")}
+        flags.inject(0){|val, flag| val | LibLZMA.const_get(:"LZMA_#{flag.to_s.upcase}")}
       )
       
       LZMAError.raise_if_necessary(res)
@@ -385,7 +387,11 @@ module XZ
     def binary_size(str)
       #Believe it or not, but this is faster than str.bytes.to_a.size.
       #I benchmarked it, and it is as twice as fast.
-      str.dup.force_encoding("BINARY").size
+      if str.respond_to? :force_encoding
+        str.dup.force_encoding("BINARY").size
+      else
+        str.bytes.to_a.size
+      end
     end
     
     #This method does the heavy work of (de-)compressing a stream. It takes
