@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =end
 
-if RUBY_VERSION >= "1.9"
+if RUBY_VERSION < "1.9"
   require_relative './lib/xz'
 else
   require File.join(File.expand_path(File.dirname(__FILE__)), 'lib', 'xz')
