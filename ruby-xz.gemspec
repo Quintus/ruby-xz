@@ -24,7 +24,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =end
 
-require_relative "lib/xz"
+if RUBY_VERSION < "1.9"
+  require_relative './lib/xz'
+else
+  require File.join(File.expand_path(File.dirname(__FILE__)), 'lib', 'xz')
+end
 
 GEMSPEC = Gem::Specification.new do |spec|
   spec.name = "ruby-xz"
@@ -35,11 +39,11 @@ create and extract XZ-compressed archives. It can cope with big
 files as well as small ones, but doesn't offer much
 of the possibilities liblzma itself has.
 DESCRIPTION
-  spec.version = XZ::VERSION.dup #Without dup, RubyGems complains it can't modify it...?
+  spec.version = XZ::VERSION.gsub("-", ".")
   spec.author = "Marvin Gülker"
   spec.email = "sutniuq@gmx.net"
   spec.platform = Gem::Platform::RUBY
-  spec.required_ruby_version = ">=1.9"
+  spec.required_ruby_version = ">=1.8.7"
   spec.add_dependency("ffi")
   spec.add_development_dependency("hanna-nouveau")
   spec.files.concat(Dir["lib/**/*.rb"])

@@ -1,9 +1,10 @@
-#Encoding: UTF-8
+# -*- coding: utf-8 -*-
 =begin (The MIT License)
 
 Basic liblzma-bindings for Ruby.
 
 Copyright © 2011 Marvin Gülker
+Copyright © 2011 Christoph Plank
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the ‘Software’),
@@ -24,7 +25,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =end
 
+require "pathname"
 require "ffi"
+require 'stringio'
 
 #The namespace and main module of this library. Each method of this module
 #may raise exceptions of class XZ::LZMAError, which is not named in the
@@ -43,10 +46,10 @@ module XZ
     #Activates extreme compression. Same as xz's "-e" commandline switch.
     LZMA_PRESET_EXTREME = 1 << 31
     
-    LZMA_TELL_NO_CHECK = 0x02
+    LZMA_TELL_NO_CHECK          = 0x02
     LZMA_TELL_UNSUPPORTED_CHECK = 0x02
-    LZMA_TELL_ANY_CHECK = 0x04
-    LZMA_CONCATENATED = 0x08
+    LZMA_TELL_ANY_CHECK         = 0x04
+    LZMA_CONCATENATED           = 0x08
     
     #Placeholder enum used by liblzma for later additions.
     LZMA_RESERVED_ENUM = enum :lzma_reserved_enum, 0
@@ -58,9 +61,9 @@ module XZ
                         :lzma_finish
                         
     #Integrity check algorithms supported by liblzma.
-    LZMA_CHECK = enum :lzma_check_none, 0,
-                      :lzma_check_crc32, 1,
-                      :lzma_check_crc64, 4,
+    LZMA_CHECK = enum :lzma_check_none,   0,
+                      :lzma_check_crc32,  1,
+                      :lzma_check_crc64,  4,
                       :lzma_check_sha256, 10
                       
     #Possible return values of liblzma functions.
@@ -77,7 +80,7 @@ module XZ
                     :lzma_buf_error,
                     :lzma_prog_error
     
-    ffi_lib "liblzma"
+    ffi_lib ['lzma.so.2', 'lzma.so', 'lzma']
     
     attach_function :lzma_easy_encoder, [:pointer, :uint32, :int], :int
     attach_function :lzma_code, [:pointer, :int], :int
@@ -92,13 +95,13 @@ module XZ
     #Raises an appropriate exception if +val+ isn't a liblzma success code.
     def self.raise_if_necessary(val)
       case val
-      when :lzma_mem_error then raise(self, "Couldn't allocate memory!")
+      when :lzma_mem_error      then raise(self, "Couldn't allocate memory!")
       when :lzma_memlimit_error then raise(self, "Decoder ran out of (allowed) memory!")
-      when :lzma_format_error then raise(self, "Unrecognized file format!")
-      when :lzma_options_error then raise(self, "Invalid options passed!")
-      when :lzma_data_error then raise raise(self, "Archive is currupt.")
-      when :lzma_buf_error then raise(self, "Buffer unusable!")
-      when :lzma_prog_error then raise(self, "Program error--if you're sure your code is correct, you may have found a bug in liblzma.")
+      when :lzma_format_error   then raise(self, "Unrecognized file format!")
+      when :lzma_options_error  then raise(self, "Invalid options passed!")
+      when :lzma_data_error     then raise(self, "Archive is currupt.")
+      when :lzma_buf_error      then raise(self, "Buffer unusable!")
+      when :lzma_prog_error     then raise(self, "Program error--if you're sure your code is correct, you may have found a bug in liblzma.")
       end
     end
     
@@ -125,43 +128,43 @@ module XZ
             :reserved_enum1, :int,
             :reserved_enum2, :int
             
-            #This method does basicly the same thing as the
-            #LZMA_STREAM_INIT macro of liblzma. Creates a new LZMAStream
-            #that has been initialized for usage. If any argument is passed,
-            #it is assumed to be a FFI::Pointer to a lzma_stream structure
-            #and that structure is wrapped.
-            def initialize(*args)
-              if args.empty? #Got a pointer, want to wrap it
-                super
-              else
-                s = super()
-                s[:next] = nil
-                s[:avail_in] = 0
-                s[:total_in] = 0
-                s[:next_out] = nil
-                s[:avail_out] = 0
-                s[:total_out] = 0
-                s[:lzma_allocator] = nil
-                s[:lzma_internal] = nil
-                s[:reserved_ptr1] = nil
-                s[:reserved_ptr2] = nil
-                s[:reserved_ptr3] = nil
-                s[:reserved_ptr4] = nil
-                s[:reserved_int1] = 0
-                s[:reserved_int2] = 0
-                s[:reserved_int3] = 0
-                s[:reserved_int4] = 0
-                s[:reserved_enum1] = LibLZMA::LZMA_RESERVED_ENUM[:lzma_reserved_enum]
-                s[:reserved_enum2] = LibLZMA::LZMA_RESERVED_ENUM[:lzma_reserved_enum]
-                s
-              end
-            end
-          end
+    #This method does basicly the same thing as the
+    #LZMA_STREAM_INIT macro of liblzma. Creates a new LZMAStream
+    #that has been initialized for usage. If any argument is passed,
+    #it is assumed to be a FFI::Pointer to a lzma_stream structure
+    #and that structure is wrapped.
+    def initialize(*args)
+      if args.empty? #Got a pointer, want to wrap it
+        super
+      else
+        s = super()
+        s[:next]           = nil
+        s[:avail_in]       = 0
+        s[:total_in]       = 0
+        s[:next_out]       = nil
+        s[:avail_out]      = 0
+        s[:total_out]      = 0
+        s[:lzma_allocator] = nil
+        s[:lzma_internal]  = nil
+        s[:reserved_ptr1]  = nil
+        s[:reserved_ptr2]  = nil
+        s[:reserved_ptr3]  = nil
+        s[:reserved_ptr4]  = nil
+        s[:reserved_int1]  = 0
+        s[:reserved_int2]  = 0
+        s[:reserved_int3]  = 0
+        s[:reserved_int4]  = 0
+        s[:reserved_enum1] = LibLZMA::LZMA_RESERVED_ENUM[:lzma_reserved_enum]
+        s[:reserved_enum2] = LibLZMA::LZMA_RESERVED_ENUM[:lzma_reserved_enum]
+        s
+      end
+    end
+  end
   
   #Number of bytes read in one chunk.
   CHUNK_SIZE = 4096
   #The version of this library.
-  VERSION = "0.0.1".freeze
+  VERSION = Pathname.new(__FILE__).dirname.expand_path.parent.join("VERSION").read.chomp.freeze
   
   class << self
     
@@ -179,7 +182,7 @@ module XZ
     #[flags]        (<tt>[:tell_unsupported_check]</tt>) Additional flags
     #               passed to liblzma (an array). Possible flags are:
     #               [:tell_no_check] Spit out a warning if the archive hasn't an
-    #                                itnegrity checksum.
+    #                                integrity checksum.
     #               [:tell_unsupported_check] Spit out a warning if the archive
     #                                         has an unsupported checksum type.
     #               [:concatenated] Decompress concatenated archives.
@@ -199,7 +202,7 @@ module XZ
     #The block form is *much* better on memory usage, because it doesn't have
     #to load everything into RAM at once. If you don't know how big your
     #data gets or if you want to decompress much data, use the block form. Of
-    #course you shouldn't store the data your read in RAM then as in the
+    #course you shouldn't store the data you read in RAM then as in the
     #example above.
     def decompress_stream(io, memory_limit = LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check], &block)
       raise(ArgumentError, "Invalid memory limit set!") unless (0..LibLZMA::UINT64_MAX).include?(memory_limit)
@@ -211,7 +214,7 @@ module XZ
       res = LibLZMA.lzma_stream_decoder(
         stream.pointer,
         memory_limit,
-        flags.inject(0){|val, flag| val | LibLZMA.const_get(:"LZMA_#{flag.upcase}")}
+        flags.inject(0){|val, flag| val | LibLZMA.const_get(:"LZMA_#{flag.to_s.upcase}")}
       )
       
       LZMAError.raise_if_necessary(res)
@@ -274,11 +277,9 @@ module XZ
       raise(ArgumentError, "Invalid checksum specified!") unless [:none, :crc32, :crc64, :sha256].include?(check)
       
       stream = LZMAStream.new
-      res = LibLZMA.lzma_easy_encoder(
-      stream.pointer,
-      compression_level | (extreme ? LibLZMA::LZMA_PRESET_EXTREME : 0),
-      LibLZMA::LZMA_CHECK[:"lzma_check_#{check}"]
-      )
+      res = LibLZMA.lzma_easy_encoder(stream.pointer,
+                                      compression_level | (extreme ? LibLZMA::LZMA_PRESET_EXTREME : 0),
+                                      LibLZMA::LZMA_CHECK[:"lzma_check_#{check}"])
       
       LZMAError.raise_if_necessary(res)
       
@@ -300,7 +301,7 @@ module XZ
     #[in_file]  The path to the file to read from.
     #[out_file] The path of the file to write to. If it exists, it will be
     #           overwritten.
-    #For the other parameters, see the compress_stream method.
+    #For the other parameters, see the ::compress_stream method.
     #===Return value
     #The number of bytes written, i.e. the size of the archive.
     #===Example
@@ -385,7 +386,11 @@ module XZ
     def binary_size(str)
       #Believe it or not, but this is faster than str.bytes.to_a.size.
       #I benchmarked it, and it is as twice as fast.
-      str.dup.force_encoding("BINARY").size
+      if str.respond_to? :force_encoding
+        str.dup.force_encoding("BINARY").size
+      else
+        str.bytes.to_a.size
+      end
     end
     
     #This method does the heavy work of (de-)compressing a stream. It takes
@@ -396,14 +401,14 @@ module XZ
     #(de-)compressing of very large files that can't be loaded fully into
     #memory.
     def lzma_code(io, stream)
-      input_buffer_p = FFI::MemoryPointer.new(CHUNK_SIZE)
+      input_buffer_p  = FFI::MemoryPointer.new(CHUNK_SIZE)
       output_buffer_p = FFI::MemoryPointer.new(CHUNK_SIZE)
       
       while str = io.read(CHUNK_SIZE)
         input_buffer_p.write_string(str)
         
         #Set the data for compressing
-        stream[:next_in] = input_buffer_p
+        stream[:next_in]  = input_buffer_p
         stream[:avail_in] = binary_size(str)
         
         #Now loop until we gathered all the data in stream[:next_out]. Depending on the
@@ -413,10 +418,10 @@ module XZ
         #lzma_code() function doesn't hurt (indeed the pipe_comp example from
         #liblzma handles it this way too). Sometimes it happens that the compressed data
         #is bigger than the original (notably when the amount of data to compress
-        #is small)
+        #is small).
         loop do
           #Prepare for getting the compressed_data
-          stream[:next_out] = output_buffer_p
+          stream[:next_out]  = output_buffer_p
           stream[:avail_out] = CHUNK_SIZE
           
           #Compress the data
@@ -444,9 +449,9 @@ module XZ
     def check_lzma_code_retval(code)
       e = LibLZMA::LZMA_RET
       case code
-      when e[:lzma_no_check] then warn("Couldn't verify archive integrity--archive has not integrity checksum.")
+      when e[:lzma_no_check]          then warn("Couldn't verify archive integrity--archive has not integrity checksum.")
       when e[:lzma_unsupported_check] then warn("Couldn't verify archive integrity--archive has an unsupported integrity checksum.")
-      when e[:lzma_get_check] then nil #This isn't useful for us. It indicates that the checksum type is now known.
+      when e[:lzma_get_check]         then nil #This isn't useful for us. It indicates that the checksum type is now known.
       else
         LZMAError.raise_if_necessary(code)
       end
