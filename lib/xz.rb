@@ -3,7 +3,7 @@
 
 Basic liblzma-bindings for Ruby.
 
-Copyright © 2011 Marvin Gülker
+Copyright © 2011,2012 Marvin Gülker
 Copyright © 2011 Christoph Plank
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,6 +28,7 @@ THE SOFTWARE.
 require "pathname"
 require "ffi"
 require 'stringio'
+require "io/like"
 
 #The namespace and main module of this library. Each method of this module
 #may raise exceptions of class XZ::LZMAError, which is not named in the
@@ -336,3 +337,5 @@ module XZ
 end
 
 require_relative "xz/lib_lzma"
+require_relative "xz/stream"
+require_relative "xz/stream_writer"
