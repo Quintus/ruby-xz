@@ -84,7 +84,7 @@ module XZ
     extend FFI::Library
     ffi_lib FFI::Library::LIBC
 
-    attach_function :memcpy, [:pointer, :pointer, :size_t]
+    attach_function :memcpy, [:pointer, :pointer, :size_t], :pointer
   end
 
   #The class of the error that this library raises.
@@ -92,7 +92,7 @@ module XZ
     
     #Raises an appropriate exception if +val+ isn't a liblzma success code.
     def self.raise_if_necessary(val)
-      case val
+      case LibLZMA::LZMA_RET[val]
       when :lzma_mem_error      then raise(self, "Couldn't allocate memory!")
       when :lzma_memlimit_error then raise(self, "Decoder ran out of (allowed) memory!")
       when :lzma_format_error   then raise(self, "Unrecognized file format!")
