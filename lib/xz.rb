@@ -285,7 +285,7 @@ module XZ
         #Set the data for compressing
         stream[:next_in]  = input_buffer_p
         stream[:avail_in] = binary_size(str)
-        
+
         #Now loop until we gathered all the data in stream[:next_out]. Depending on the
         #amount of data, this may not fit into the buffer, meaning that we have to
         #provide a pointer to a "new" buffer that liblzma can write into. Since

@@ -13,8 +13,7 @@ class XZ::StreamWriter < XZ::Stream
   private
   
   def unbuffered_write(data)
-    io = StringIO.new(data)
-    lzma_code(io)
+    lzma_code(data)
   end
   
 end

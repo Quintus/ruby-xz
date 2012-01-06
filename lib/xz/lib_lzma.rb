@@ -80,6 +80,13 @@ module XZ
     
   end
 
+  module LibC
+    extend FFI::Library
+    ffi_lib FFI::Library::LIBC
+
+    attach_function :memcpy, [:pointer, :pointer, :size_t]
+  end
+
   #The class of the error that this library raises.
   class LZMAError < StandardError
     
