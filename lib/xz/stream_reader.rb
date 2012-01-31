@@ -2,6 +2,16 @@
 
 class XZ::StreamReader < XZ::Stream
 
+  def self.open(filename, *args)
+    File.open(filename, "rb") do |file|
+      begin
+        reader = new(file, *args)
+      ensure
+        reader.close unless reader.closed?
+      end
+    end
+  end
+
   def initialize(delegate_io, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check])
     raise(ArgumentError, "Invalid memory limit set!") unless (0..XZ::LibLZMA::UINT64_MAX).include?(memory_limit)
     flags.each do |flag|

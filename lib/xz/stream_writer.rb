@@ -2,6 +2,17 @@
 
 class XZ::StreamWriter < XZ::Stream
 
+  def self.open(filename, *args)
+    File.open(filename, "wb") do |file|
+      begin
+        writer = new(file, *args)
+        yield(writer)
+      ensure
+        writer.close unless writer.closed?
+      end
+    end
+  end
+
   def initialize(delegate_io, compression_level = 6, check = :crc64, extreme = false)
     super(delegate_io)
     
