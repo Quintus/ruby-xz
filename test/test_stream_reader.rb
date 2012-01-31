@@ -12,7 +12,7 @@ class StreamReaderTest < Test::Unit::TestCase
   PLAIN_TEXT_FILE = TEST_DATA_DIR + "lorem_ipsum.txt"
   XZ_TEXT_FILE    = TEST_DATA_DIR + "lorem_ipsum.txt.xz"
 
-  def test_stream_reader_new
+  def test_new
     File.open(XZ_TEXT_FILE) do |file|
       reader = XZ::StreamReader.new(file)
       
@@ -28,9 +28,34 @@ class StreamReaderTest < Test::Unit::TestCase
     end
   end
 
-  def test_stream_reader_open
+  def test_open
     XZ::StreamReader.open(XZ_TEXT_FILE) do |reader|
       assert_equal(File.read(PLAIN_TEXT_FILE), reader.read)
+    end
+  end
+
+  def test_pos
+    text = File.read(PLAIN_TEXT_FILE)
+    XZ::StreamReader.open(XZ_TEXT_FILE) do |reader|
+      reader.read
+      assert_equal(text.bytes.count, reader.pos)
+    end
+  end
+
+  def test_rewind
+    # Non-block form
+    File.open(XZ_TEXT_FILE, "rb") do |file|
+      reader = XZ::StreamReader.new(file)
+      text = reader.read(10)
+      reader.rewind
+      assert_equal(text, reader.read(10))
+    end
+
+    # Block form
+    XZ::StreamReader.open(XZ_TEXT_FILE) do |reader|
+      text = reader.read(10)
+      reader.rewind
+      assert_equal(text, reader.read(10))
     end
   end
 
