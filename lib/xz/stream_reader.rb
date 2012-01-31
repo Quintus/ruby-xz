@@ -13,6 +13,8 @@ class XZ::StreamReader < XZ::Stream
                                           memory_limit,
                                           flags.inject(0){|val, flag| val | XZ::LibLZMA.const_get(:"LZMA_#{flag.to_s.upcase}")})
     XZ::LZMAError.raise_if_necessary(res)
+    
+    @input_buffer_p = FFI::MemoryPointer.new(XZ::CHUNK_SIZE)
   end
   
   def close
@@ -65,6 +67,10 @@ class XZ::StreamReader < XZ::Stream
 
       res = XZ::LibLZMA.lzma_code(@lzma_stream.pointer, @__lzma_action)
 
+      # liblzma signals LZMA_BUF_ERROR when the output buffer is
+      # completely filled, which means we can return now.
+      # When it signals LZMA_STREAM_END, the buffer won’t be filled
+      # completely anymore as the whole input data has been consumed.
       if res == XZ::LibLZMA::LZMA_RET[:lzma_buf_error]
         # @lzma_stream[:avail_out] holds the number of free bytes _behind_
         # the produced output!

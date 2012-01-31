@@ -10,14 +10,51 @@ class XZ::StreamWriter < XZ::Stream
     XZ::LZMAError.raise_if_necessary(res)
   end
 
+  def close
+    super
+    
+    #1. Close the current block ("file") (an XZ stream may actually include
+    #   multiple compressed files, which however is not supported by
+    #   this library). For this we have to tell liblzma that
+    #   the next bytes we pass to it are the last bytes (by means of
+    #   the FINISH action). However, when this method is called all
+    #   data has already been handed over, so we just tell liblzma that
+    #   there are exactly 0 bytes we want to compress before finishing
+    #   the file.
+    
+    output_buffer_p         = FFI::MemoryPointer.new(XZ::CHUNK_SIZE)
+    @lzma_stream[:next_in]  = nil # We can pass a NULL pointer here b/c we make libzlma...
+    @lzma_stream[:avail_in] = 0   #...only read 0 bytes from that pointer
+    
+    # Get any pending data (LZMA_FINISH causes libzlma to flush its
+    # internal buffers) and write it out to our wrapped IO.
+    loop do
+      @lzma_stream[:next_out]  = output_buffer_p
+      @lzma_stream[:avail_out] = output_buffer_p.size
+      
+      res = XZ::LibLZMA.lzma_code(@lzma_stream.pointer, XZ::LibLZMA::LZMA_ACTION[:lzma_finish])
+      XZ::LZMAError.raise_if_necessary(res)
+      
+      @delegate_io.write(output_buffer_p.read_string(output_buffer_p.size - @lzma_stream[:avail_out]))
+      
+      break unless @lzma_stream[:avail_out] == 0
+    end
+
+    #2. Close the whole XZ stream.
+    res = XZ::LibLZMA.lzma_end(@lzma_stream.pointer)
+    XZ::LZMAError.raise_if_necessary(res)
+
+    #3. Return the number of bytes written in total.
+    @lzma_stream[:total_out]
+  end
+
   private
   
   def unbuffered_write(data)
-    input_buffer_p  = FFI::MemoryPointer.from_string(data)
     output_buffer_p = FFI::MemoryPointer.new(XZ::CHUNK_SIZE)
-    bytes_before    = @lzma_stream[:total_in]
+    input_buffer_p  = FFI::MemoryPointer.from_string(data)
 
-    @lzma_stream[:next_in] = input_buffer_p
+    @lzma_stream[:next_in]  = input_buffer_p
     @lzma_stream[:avail_in] = input_buffer_p.size
 
     loop do
@@ -32,16 +69,11 @@ class XZ::StreamWriter < XZ::Stream
       result = output_buffer_p.read_string(output_buffer_p.size - @lzma_stream[:avail_out])
       @delegate_io.write(result)
 
-      # If the output buffer is completely filled, it's likely that there is
-      # more data liblzma wants to hand to us. Start a new iteration,
-      # but don't provide new input data.
-      break unless @lzma_stream[:avail_out] == 0
+      # Loop until liblzma ate the whole data.
+      break if @lzma_stream[:avail_in] == 0
     end
 
-    # Return the number of bytes accepted by liblzma; this should
-    # be equal to the size of +data+.
-    bytes_after = @lzma_stream[:total_in]
-    bytes_after - bytes_before
+    binary_size(data)
   rescue XZ::LZMAError => e
     raise(SystemCallError, e.message)
   end

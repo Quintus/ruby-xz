@@ -30,7 +30,6 @@ class XZ::Stream
   def initialize(delegate_io)
     @delegate_io    = delegate_io
     @lzma_stream    = XZ::LZMAStream.new
-    @input_buffer_p = FFI::MemoryPointer.new(XZ::CHUNK_SIZE)
   end
 
   private

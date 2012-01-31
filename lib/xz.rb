@@ -338,5 +338,5 @@ end
 
 require_relative "xz/lib_lzma"
 require_relative "xz/stream"
-#require_relative "xz/stream_writer"
+require_relative "xz/stream_writer"
 require_relative "xz/stream_reader"
