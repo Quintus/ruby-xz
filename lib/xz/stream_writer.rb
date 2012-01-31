@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 class XZ::StreamWriter < XZ::Stream
 
   def initialize(delegate_io, compression_level = 6, check = :crc64, extreme = false)
@@ -23,8 +25,6 @@ class XZ::StreamWriter < XZ::Stream
     #   the file.
     
     output_buffer_p         = FFI::MemoryPointer.new(XZ::CHUNK_SIZE)
-    @lzma_stream[:next_in]  = nil # We can pass a NULL pointer here b/c we make libzlma...
-    @lzma_stream[:avail_in] = 0   #...only read 0 bytes from that pointer
     
     # Get any pending data (LZMA_FINISH causes libzlma to flush its
     # internal buffers) and write it out to our wrapped IO.
@@ -52,10 +52,10 @@ class XZ::StreamWriter < XZ::Stream
   
   def unbuffered_write(data)
     output_buffer_p = FFI::MemoryPointer.new(XZ::CHUNK_SIZE)
-    input_buffer_p  = FFI::MemoryPointer.from_string(data)
+    input_buffer_p  = FFI::MemoryPointer.from_string(data) # This adds a terminating NUL byte we don’t want to compress!
 
     @lzma_stream[:next_in]  = input_buffer_p
-    @lzma_stream[:avail_in] = input_buffer_p.size
+    @lzma_stream[:avail_in] = input_buffer_p.size - 1 # Don’t hand the terminating NUL
 
     loop do
       @lzma_stream[:next_out]  = output_buffer_p
