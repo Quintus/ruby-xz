@@ -74,7 +74,7 @@ class XZ::StreamReader < XZ::Stream
         @__lzma_finished = true
         return output_buffer_p.read_string(output_buffer_p.size - @lzma_stream[:avail_out])
       else
-        XZ::LZMAError.throw_if_necessary(res)
+        XZ::LZMAError.raise_if_necessary(res)
       end
     end #loop
 
