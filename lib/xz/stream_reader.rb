@@ -6,6 +6,7 @@ class XZ::StreamReader < XZ::Stream
     File.open(filename, "rb") do |file|
       begin
         reader = new(file, *args)
+        yield(reader)
       ensure
         reader.close unless reader.closed?
       end
