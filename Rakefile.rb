@@ -29,7 +29,6 @@ gem "rdoc"
 require "rake"
 require "rubygems/package_task"
 require "rdoc/task"
-require "rake/testtask"
 
 load "ruby-xz.gemspec"
 
@@ -43,6 +42,13 @@ Rake::RDocTask.new do |rd|
   rd.rdoc_dir = "doc"
 end
 
-Rake::TestTask.new do |t|
-  t.test_files = FileList["test/test_*.rb"]
+desc "Runs the tests."
+task :test do
+  cd "test"
+  Dir["test_*.rb"].each do |filename|
+    puts "Running '#{filename}'."
+    puts "=" * 80
+    ruby filename
+    puts
+  end
 end
