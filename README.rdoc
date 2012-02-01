@@ -7,6 +7,13 @@ you the possibility of creating and extracting XZ archives on any platform
 where liblzma is installed. No compilation is needed, because ruby-xz is
 written ontop of ffi[https://github.com/ffi/ffi].
 
+ruby-xz supports both "intuitive" (de)compression by providing methods to
+directly operate on strings and files, but also allows you to operate
+directly on IO streams (see the various methods of the XZ module). On top
+of that, ruby-xz offers an advanced interface that allows you to treat
+XZ-compressed data as IO streams, both for reading and for writing. See the
+XZ::StreamReader and XZ::StreamWriter classes for more information on this.
+
 == Installation
 
 Install it the way you install all your gems.
