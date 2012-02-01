@@ -42,7 +42,7 @@
 #2. The IO object you passed to ::new.
 #
 #Do it <b>in exactly that order</b>, otherwise closing the StreamReader
-#object may cause read errors due. If you use ::open, this is done
+#object may cause read errors. If you use ::open, this is done
 #automatically for you (Ruby’s +zlib+ bindings in the stdlib behave
 #the same way).
 #
@@ -59,7 +59,7 @@
 #  require "archive/tar/minitar"
 #  
 #  XZ::StreamReader.open("foo.tar.xz") do |txz|
-#    # This automatically closes xz
+#    # This automatically closes txz
 #    Archive::Tar::Minitar.unpack(txz, "foo")
 #  end
 class XZ::StreamReader < XZ::Stream
@@ -101,7 +101,7 @@ class XZ::StreamReader < XZ::Stream
   #[delegate_io] An IO object to read the data from, e.g. an
   #              opened file. If you’re in an urgent need to
   #              pass a plain string, use StringIO from Ruby’s
-  #              standard library.
+  #              standard library. Must be opened for reading.
   #The other parameters are identical to what the XZ::decompress_stream
   #method expects.
   #==Return value
@@ -146,10 +146,7 @@ class XZ::StreamReader < XZ::Stream
   #  r.close #=> 6468
   #==Remarks
   #This method doesn’t close the wrapped IO object, so
-  #it’s likely that you have to explicitely close that one
-  #as well in order to see your compressed data in the
-  #resulting file. FYI: Ruby’s +zlib+ bindings in the stdlib
-  #behaves the same way.
+  #you have to close it yourself.
   def close
     super
     
@@ -165,7 +162,7 @@ class XZ::StreamReader < XZ::Stream
   #  pos()  → an_integer
   #  tell() → an_integer
   #
-  #Total number of bytes written so far to the delegate IO.
+  #Total number of output bytes provided to you yet.
   def pos
     @lzma_stream[:total_out]
   end

@@ -23,7 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-#An IO-like writer class for XZ compressed data, allowing you to write
+#An IO-like writer class for XZ-compressed data, allowing you to write
 #uncompressed data to a stream which ends up as compressed data in
 #a wrapped stream such as a file.
 #
@@ -42,10 +42,10 @@
 #cached at least twice before it actually gets written out. Regarding
 #file closing that means that before you can be sure any pending data
 #has been written to the file you have to close both the StreamWriter
-#instance and then wrapped IO object (in *exactly* that order, otherwise
-#data loss and unexpected exception can occur!).
+#instance and then the wrapped IO object (in *exactly* that order, otherwise
+#data loss and unexpected exceptions may occur!).
 #
-#As it may be tedious to always remember the correct closing order,
+#As it might be tedious to always remember the correct closing order,
 #there exists a convenience method for writing compressed files,
 #StreamWriter::open. It takes care of closing both the wrapped File
 #object and itself, plus a nice block syntax you can use to logically
@@ -62,7 +62,7 @@
 #
 #==Example
 #Together with the <tt>archive-tar-minitar</tt> gem, this library
-#can be used to create XZ-compressed TAR archive (these commonly
+#can be used to create XZ-compressed TAR archives (these commonly
 #use a file extension of <tt>.tar.xz</tt> or rarely <tt>.txz</tt>).
 #
 #  XZ::StreamWriter.open("foo.tar.xz") do |txz|
@@ -97,8 +97,9 @@ class XZ::StreamWriter < XZ::Stream
   #Creates a new StreamWriter instance. Remember you have to #close
   #*both* the passed IO object and the resulting instance.
   #==Parameters
-  #[delegate_io] An IO object to read the data from, e.g. an opened
-  #              file. Can also be a StringIO.
+  #[delegate_io] An IO object to write the data to, e.g. an opened
+  #              file. May even be a StringIO. Must be opened for
+  #              writing.
   #The other parameters are identical to what the XZ::compress_stream
   #method expects.
   #==Return value
