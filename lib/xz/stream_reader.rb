@@ -20,7 +20,8 @@
 #
 #Do it <b>in exactly that order</b>, otherwise closing the StreamReader
 #object may cause read errors due. If you use ::open, this is done
-#automatically for you.
+#automatically for you (Ruby’s +zlib+ bindings in the stdlib behave
+#the same way).
 #
 #See the +io-like+ gem’s documentation for the IO-reading methods
 #available for this class (although you’re probably familiar with
@@ -46,15 +47,15 @@ class XZ::StreamReader < XZ::Stream
   attr_reader :flags
 
   #Opens the given file and wraps the resulting File object via
-  #::new. This method automatically closes both itself and the
-  #opened File object. Please note this method _requires_ you
-  #to pass a block; if you don’t want, use ::new directly. The reason
+  #::new. This method automatically closes both the opened File
+  #object and itself. Please note this method _requires_ you
+  #to pass a block; if you don’t want to, use ::new directly. The reason
   #behind this is that otherwise there’s no way to autoclose the opened
   #file beside an +at_exit+ handler which I want to avoid.
   #==Parameters
   #[filename] The path to the file you want to decompress. This
-  #           may be a string or a (stdlib) Pathname object,
-  #[*args]    See ::new, this is directly passed through.
+  #           may be a string or a (stdlib) Pathname object.
+  #[*args]    See ::new, these are directly passed through.
   #==Example
   #  # Simply decompress a file to $stdout using this method
   #  XZ::StreamReader.open("file.txt.xz"){|f| puts(f.read)}
@@ -78,7 +79,7 @@ class XZ::StreamReader < XZ::Stream
   #              opened file. If you’re in an urgent need to
   #              pass a plain string, use StringIO from Ruby’s
   #              standard library.
-  #The other parameters are identical to what the XZ.decompress_stream
+  #The other parameters are identical to what the XZ::decompress_stream
   #method expects.
   #==Return value
   #The newly created instance.
@@ -116,15 +117,16 @@ class XZ::StreamReader < XZ::Stream
   
   #Closes this StreamReader instance. Don’t use it afterwards
   #anymore.
-  #
-  #This method does *not* close the wrapped IO object, you have
-  #to do that manually!
   #==Return value
   #The total number of bytes decompressed.
   #==Example
   #  r.close #=> 6468
   #==Remarks
-  #TODO: Shouldn’t this method close the wrapped IO?
+  #This method doesn’t close the wrapped IO object, so
+  #it’s likely that you have to explicitely close that one
+  #as well in order to see your compressed data in the
+  #resulting file. FYI: Ruby’s +zlib+ bindings in the stdlib
+  #behaves the same way.
   def close
     super
     
@@ -190,7 +192,7 @@ class XZ::StreamReader < XZ::Stream
 
   private
 
-  #Called by io-like’s methods such as #read. Does the heavy work
+  #Called by io-like’s read methods such as #read. Does the heavy work
   #of feeding liblzma the compressed data and reading the returned
   #uncompressed data.
   def unbuffered_read(length)
