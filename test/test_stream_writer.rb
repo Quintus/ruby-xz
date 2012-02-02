@@ -61,6 +61,28 @@ class StreamWriterTest < Test::Unit::TestCase
     assert_equal(text, XZ.decompress(File.open(LIVE_TEST_FILE, "rb"){|f| f.read}))
   end
 
+  def test_file_closing
+    File.open(LIVE_TEST_FILE, "wb") do |file|
+      XZ::StreamWriter.new(file){|w| w.write("Foo")}
+      assert(!file.closed?, "Closed file although not expected!")
+    end
+
+    File.open(LIVE_TEST_FILE, "wb") do |file|
+      w = XZ::StreamWriter.new(file)
+      w.write("Foo")
+      w.close
+      assert(!file.closed?, "Closed file although not expected!")
+    end
+
+    writer = XZ::StreamWriter.new(LIVE_TEST_FILE){|w| w.write("Foo")}
+    assert(writer.instance_variable_get(:@file).closed?, "Didn't close internally opened file!")
+
+    writer = XZ::StreamWriter.new(LIVE_TEST_FILE)
+    writer.write("Foo")
+    writer.close
+    assert(writer.instance_variable_get(:@file).closed?, "Didn't close internally opened file!")
+  end
+
   def test_stream_writer_open
     text = File.read(PLAIN_TEXT_FILE)
     

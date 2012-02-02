@@ -46,15 +46,9 @@
 #data loss and unexpected exceptions may occur!).
 #
 #As it might be tedious to always remember the correct closing order,
-#there exists a convenience method for writing compressed files,
-#StreamWriter::open. It takes care of closing both the wrapped File
-#object and itself, plus a nice block syntax you can use to logically
-#structure your code. However, if you don’t want to write to a file,
-#you have to pass the IO object in question directly to the ::new
-#method and remember to close first the StreamWriter instance,
-#followed by your IO object. Neither ::new nor #close take care
-#of closing your passed IO object (Ruby’s +zlib+ bindings in the
-#stdlib behave the same way).
+#it’s possible to pass a filename to the ::new method. In this case,
+#StreamWriter will open the file internally and also takes care closing
+#it when you call the #close method.
 #
 #See the +io-like+ gem’s documentation for the IO-writing methods
 #available for this class (although you’re probably familiar with
@@ -71,35 +65,18 @@
 #  end
 class XZ::StreamWriter < XZ::Stream
 
-  #Opens the given file and wraps the resulting File object via ::new.
-  #This method automatically closes both the opened File object and
-  #itself. Please note this method _requires_ you to pass a block;
-  #if you don’t want to, use ::new directly. See StreamReader::open for
-  #some reasoning.
+  #call-seq:
+  # open(delegate, compression_level = 6, check = :crc64, extreme = false) → a_stream_writer
+  # new(delegate, compression_level = 6, check = :crc64, extreme = false)  → a_stream_writer
+  #
+  #Creates a new StreamWriter instance. The block form automatically
+  #calls the #close method when the block has finished executing.
   #==Parameters
-  #[filename] The path of the file you want to compress _to_. This
-  #           may be a string or a (stdlib) Pathname object.
-  #[*args]    See ::new, these are directly passed through.
-  #==Example
-  #  # Compress everything from $stdin to a file on disk
-  #  XZ::StreamWriter.open("data.xz"){|f| f.write($stdin.read)}
-  def self.open(filename, *args)
-    File.open(filename, "wb") do |file|
-      begin
-        writer = new(file, *args)
-        yield(writer)
-      ensure
-        writer.close unless writer.closed?
-      end
-    end
-  end
-
-  #Creates a new StreamWriter instance. Remember you have to #close
-  #*both* the passed IO object and the resulting instance.
-  #==Parameters
-  #[delegate_io] An IO object to write the data to, e.g. an opened
-  #              file. May even be a StringIO. Must be opened for
-  #              writing.
+  #[delegate] An IO object to write the data to or a filename
+  #           which will be opened internally. If you pass an IO,
+  #           the #close method won’t close the passed IO object;
+  #           if you passed a filename, the created internal file
+  #           of course gets closed.
   #The other parameters are identical to what the XZ::compress_stream
   #method expects.
   #==Return value
@@ -118,15 +95,32 @@ class XZ::StreamWriter < XZ::Stream
   #  # (may take eternity)
   #  f = File.open("data.xz")
   #  w = XZ::StreamWriter.new(f, 9, :crc64, true)
-  def initialize(delegate_io, compression_level = 6, check = :crc64, extreme = false)
-    super(delegate_io)
+  #
+  #  # Passing a filename
+  #  w = XZ::StreamWriter.new("compressed_data.xz")
+  def initialize(delegate, compression_level = 6, check = :crc64, extreme = false)
+    if delegate.respond_to?(:to_io)
+      super(delegate)
+    else
+      @file = File.open(delegate, "wb")
+      super(@file)
+    end
     
     # Initialize the internal LZMA stream for encoding
     res = XZ::LibLZMA.lzma_easy_encoder(@lzma_stream.pointer, 
                                   compression_level | (extreme ? XZ::LibLZMA::LZMA_PRESET_EXTREME : 0),
                                   XZ::LibLZMA::LZMA_CHECK[:"lzma_check_#{check}"])
     XZ::LZMAError.raise_if_necessary(res)
+
+    if block_given?
+      begin
+        yield(self)
+      ensure
+        close
+      end
+    end
   end
+  self.class.send(:alias_method, :open, :new)
 
   #Closes this StreamWriter instance and flushes all internal buffers.
   #Don’t use it afterwards anymore.
@@ -136,8 +130,8 @@ class XZ::StreamWriter < XZ::Stream
   #==Example
   #  w.close #=> 424
   #==Remarks
-  #This method doesn’t close the wrapped IO object, you have to
-  #close it yourself.
+  #If you passed an IO object to ::new, this method doesn’t close it,
+  #you have to do that yourself.
   def close
     super
     
@@ -166,6 +160,9 @@ class XZ::StreamWriter < XZ::Stream
     #2. Close the whole XZ stream.
     res = XZ::LibLZMA.lzma_end(@lzma_stream.pointer)
     XZ::LZMAError.raise_if_necessary(res)
+
+    #2b. If we wrapped a file automatically, close it.
+    @file.close if @file
 
     #3. Return the number of bytes written in total.
     @lzma_stream[:total_out]

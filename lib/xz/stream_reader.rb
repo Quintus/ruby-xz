@@ -32,19 +32,17 @@
 #A StreamReader object actually wraps another IO object it reads
 #the compressed data from; you can either pass this IO object directly
 #to the ::new method, effectively allowing you to pass any IO-like thing
-#you can imagine (just ensure it is readable), or you can use the ::open
-#method which allows you to access files using a nice block-syntax that
-#also ensures that everything gets closed after your operations. If you
-#decide to directly use the ::new method, you have to ensure that you
-#close:
+#you can imagine (just ensure it is readable), or you can pass a path
+#to a filename to ::new, in which case StreamReader takes care of both
+#opening and closing the file correctly. You can even take it one step
+#further and use the block form of ::new which will automatically call
+#the #close method for you after the block finished. However, if you pass
+#an IO, remember you have to close:
 #
 #1. The StreamReader instance.
 #2. The IO object you passed to ::new.
 #
-#Do it <b>in exactly that order</b>, otherwise closing the StreamReader
-#object may cause read errors. If you use ::open, this is done
-#automatically for you (Ruby’s +zlib+ bindings in the stdlib behave
-#the same way).
+#Do it <b>in exactly that order</b>, otherwise you may lose data.
 #
 #See the +io-like+ gem’s documentation for the IO-reading methods
 #available for this class (although you’re probably familiar with
@@ -69,39 +67,21 @@ class XZ::StreamReader < XZ::Stream
   #The flags you set for this reader (in ::new).
   attr_reader :flags
 
-  #Opens the given file and wraps the resulting File object via
-  #::new. This method automatically closes both the opened File
-  #object and itself. Please note this method _requires_ you
-  #to pass a block; if you don’t want to, use ::new directly. The reason
-  #behind this is that otherwise there’s no way to autoclose the opened
-  #file beside an +at_exit+ handler which I want to avoid.
+  #call-seq:
+  #  new(delegate, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check])  → a_stream_reader
+  #  open(delegate, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check]) → a_stream_reader
+  #
+  #Creates a new StreamReader instance. If you pass an IO,
+  #remember you have to close *both* the resulting instance
+  #(via the #close method) and the IO object you pass to flush
+  #any internal buffers in order to be able to read all decompressed
+  #data.
   #==Parameters
-  #[filename] The path to the file you want to decompress. This
-  #           may be a string or a (stdlib) Pathname object.
-  #[*args]    See ::new, these are directly passed through.
-  #==Example
-  #  # Simply decompress a file to $stdout using this method
-  #  XZ::StreamReader.open("file.txt.xz"){|f| puts(f.read)}
-  def self.open(filename, *args)
-    File.open(filename, "rb") do |file|
-      begin
-        reader = new(file, *args)
-        yield(reader)
-      ensure
-        reader.close unless reader.closed?
-      end
-    end
-  end
-
-  #Creates a new StreamReader instance. Remember you have to close
-  #*both* the resulting instance (via the #close method) and the
-  #IO object you pass to flush any internal buffers in order to
-  #be able to read all decompressed data.
-  #==Parameters
-  #[delegate_io] An IO object to read the data from, e.g. an
-  #              opened file. If you’re in an urgent need to
-  #              pass a plain string, use StringIO from Ruby’s
-  #              standard library. Must be opened for reading.
+  #[delegate] An IO object to read the data from, or a path
+  #           to a file to open. If you’re in an urgent need to
+  #           pass a plain string, use StringIO from Ruby’s
+  #           standard library. If this is an IO, it must be
+  #           opened for reading.
   #The other parameters are identical to what the XZ::decompress_stream
   #method expects.
   #==Return value
@@ -115,13 +95,21 @@ class XZ::StreamReader < XZ::Stream
   #  File.open("foo.xz") do |f|
   #    r = XZ::StreamReader.new(f, XZ::LibLZMA::UINT64_MAX, [:tell_no_check]
   #  end
-  def initialize(delegate_io, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check])
+  #
+  #  # Let StreamReader handle file closing automatically
+  #  XZ::StreamReader.new("myfile.xz"){|r| r.raed}
+  def initialize(delegate, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check])
     raise(ArgumentError, "Invalid memory limit set!") unless (0..XZ::LibLZMA::UINT64_MAX).include?(memory_limit)
     flags.each do |flag|
       raise(ArgumentError, "Unknown flag #{flag}!") unless [:tell_no_check, :tell_unsupported_check, :tell_any_check, :concatenated].include?(flag)
     end
     
-    super(delegate_io)
+    if delegate.respond_to?(:to_io)
+      super(delegate)
+    else
+      @file = File.open(delegate, "rb")
+      super(@file)
+    end
 
     @memory_limit = memory_limit
     @flags        = flags
@@ -136,7 +124,16 @@ class XZ::StreamReader < XZ::Stream
     # These two are only used in #unbuffered read.
     @__lzma_finished = false
     @__lzma_action   = nil
+
+    if block_given?
+      begin
+        yield(self)
+      ensure
+        close
+      end
+    end
   end
+  self.class.send(:alias_method, :open, :new)
   
   #Closes this StreamReader instance. Don’t use it afterwards
   #anymore.
@@ -145,7 +142,7 @@ class XZ::StreamReader < XZ::Stream
   #==Example
   #  r.close #=> 6468
   #==Remarks
-  #This method doesn’t close the wrapped IO object, so
+  #If you passed an IO to ::new, this method doesn’t close it, so
   #you have to close it yourself.
   def close
     super
@@ -153,6 +150,9 @@ class XZ::StreamReader < XZ::Stream
     # Close the XZ stream
     res = XZ::LibLZMA.lzma_end(@lzma_stream.pointer)
     XZ::LZMAError.raise_if_necessary(res)
+
+    #If we created a File object, close this as well.
+    @file.close if @file
 
     # Return the number of bytes written in total.
     @lzma_stream[:total_out]
@@ -206,7 +206,9 @@ class XZ::StreamReader < XZ::Stream
       raise(IOError, "Delegate IO failed to rewind! Original message: #{e.message}")
     end
     
-    # Reinitialize everything
+    # Reinitialize everything. Note this doesn’t affect @file as it
+    # is already set and stays so (we don’t pass a filename here,
+    # but rather an IO)
     initialize(@delegate_io, @memory_limit, @flags)
   end
 

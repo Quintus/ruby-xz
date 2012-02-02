@@ -52,6 +52,43 @@ class StreamReaderTest < Test::Unit::TestCase
     end
   end
 
+  def test_file_closing
+    File.open(XZ_TEXT_FILE, "rb") do |file|
+      XZ::StreamReader.new(file){|r| r.read}
+      assert(!file.closed?, "Closed file although not expected!")
+    end
+
+    File.open(XZ_TEXT_FILE, "rb") do |file|
+      reader = XZ::StreamReader.new(file)
+      reader.read
+      reader.close
+      assert(!file.closed?, "Closed file although not expected!")
+    end
+
+    reader = XZ::StreamReader.new(XZ_TEXT_FILE){|r| r.read}
+    assert(reader.instance_variable_get(:@file).closed?, "Didn't close internally created file!")
+
+    reader = XZ::StreamReader.new(XZ_TEXT_FILE)
+    reader.read
+    reader.close
+    assert(reader.instance_variable_get(:@file).closed?, "Didn't close internally created file!")
+
+    File.open(XZ_TEXT_FILE, "rb") do |file|
+      XZ::StreamReader.new(file) do |r|
+        r.read(10)
+        r.rewind
+        assert(!file.closed?, "Closed handed IO during rewind!")
+      end
+    end
+
+    XZ::StreamReader.new(XZ_TEXT_FILE) do |r|
+      r.read(10)
+      r.rewind
+      assert(!r.instance_variable_get(:@file).closed?, "Closed internal file during rewind")
+    end
+    
+  end
+
   def test_open
     XZ::StreamReader.open(XZ_TEXT_FILE) do |reader|
       assert_equal(File.read(PLAIN_TEXT_FILE), reader.read)
