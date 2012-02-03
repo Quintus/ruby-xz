@@ -1,29 +1,90 @@
 # -*- coding: utf-8 -*-
-=begin (The MIT License)
+# (The MIT License)
+# 
+# Basic liblzma-bindings for Ruby.
+# 
+# Copyright © 2011,2012 Marvin Gülker
+# Copyright © 2011 Christoph Plank
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the ‘Software’),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the Software
+# is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
-Basic liblzma-bindings for Ruby.
+if RUBY_VERSION < "1.9"
+  require "rubygems"
+  
+  # The following is the complete sourcode of the require_relative gem
+  # by Steve Klabnik, licensed under the BSD license:
+  #
+  # Copyright (c) 2011, Steve Klabnik
+  # All rights reserved.
+  #
+  # Redistribution and use in source and binary forms, with or without
+  # modification, are permitted provided that the following conditions are
+  # met:
+  #
+  # * Redistributions of source code must retain the above copyright
+  #   notice, this list of conditions and the following disclaimer.
+  # * Redistributions in binary form must reproduce the above copyright
+  #   notice, this list of conditions and the following disclaimer in the
+  #   documentation and/or other materials provided with the distribution.
+  #
+  # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  # A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+  # HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  # LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  # DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  # require\_relative has no effect on Ruby 1.9 (or other versions that provide Kernel#require_relative
+  # out of the box)
+  unless Object.new.respond_to?(:require_relative, true)
+    # Yep, you're looking at it! This gem is pretty small, and for good reason.
+    # There's not much to do! We use split to find the filename that we're
+    # looking to require, raise a LoadError if it's called in a context (like eval)
+    # that it shouldn't be, and then require it via regular old require.
+    #
+    # Now, in 1.9, "." is totally removed from the $LOAD_PATH. We don't do that
+    # here, because that would break a lot of other code! You're still vulnerable
+    # to the security hole that caused this change to happen in the first place.
+    # You will be able to use this gem to transition the code you write over to
+    # the 1.9 syntax, though.
+    def require_relative(relative_feature) # :nodoc:
 
-Copyright © 2011,2012 Marvin Gülker
-Copyright © 2011 Christoph Plank
+      file = caller.first.split(/:\d/,2).first
 
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the ‘Software’),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the Software
-is furnished to do so, subject to the following conditions:
+      raise LoadError, "require_relative is called in #{$1}" if /\A\((.*)\)/ =~ file
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+      require File.expand_path(relative_feature, File.dirname(file))
+    end
+  end
 
-THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-=end
+  unless String.instance_methods.include?(:clear)
+    class String # :nodoc:
+      def clear
+        replace("")
+      end
+    end
+  end
+end
 
 require "pathname"
 require "ffi"
