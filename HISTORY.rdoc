@@ -1,0 +1,6 @@
+== 0.1.0
+
+* <b>Add XZ::StreamReader and XZ::StreamWriter for io-like behaviour.</b>
+* New dependency on the +io-like+ gem.
+* <b>Add Ruby 1.8 compatibility.</b> Thanks to Christoph Plank.
+* We now have proper unit tests.
