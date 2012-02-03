@@ -91,7 +91,7 @@ THE SOFTWARE.
 ==== require_relative
 
 This library includes the sourcecode of Steve Klabnik’s
-[require_relative gem]{http://steveklabnik.github.com/require_relative/}
+{require_relative gem}[http://steveklabnik.github.com/require_relative/]
 in order to make it 1.8-compatible. It’s licensed under the BSD license:
 
 Copyright (c) 2011, Steve Klabnik
