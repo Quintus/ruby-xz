@@ -81,6 +81,14 @@ class StreamWriterTest < Test::Unit::TestCase
     writer.write("Foo")
     writer.close
     assert(writer.instance_variable_get(:@file).closed?, "Didn't close internally opened file!")
+
+    # Test double closing
+    assert_nothing_raised do
+      XZ::StreamWriter.open(LIVE_TEST_FILE) do |w|
+        w.write("Foo")
+        w.close
+      end
+    end
   end
 
   def test_stream_writer_open

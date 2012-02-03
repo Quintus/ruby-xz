@@ -86,6 +86,13 @@ class StreamReaderTest < Test::Unit::TestCase
       r.rewind
       assert(!r.instance_variable_get(:@file).closed?, "Closed internal file during rewind")
     end
+
+    # Test double closing
+    assert_nothing_raised do
+      XZ::StreamReader.open(XZ_TEXT_FILE) do |r|
+        r.close
+      end
+    end
     
   end
 

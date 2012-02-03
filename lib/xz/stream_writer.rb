@@ -116,7 +116,7 @@ class XZ::StreamWriter < XZ::Stream
       begin
         yield(self)
       ensure
-        close
+        close unless closed?
       end
     end
   end

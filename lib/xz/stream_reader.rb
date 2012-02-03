@@ -129,7 +129,7 @@ class XZ::StreamReader < XZ::Stream
       begin
         yield(self)
       ensure
-        close
+        close unless closed?
       end
     end
   end
