@@ -30,24 +30,24 @@ else
 end
 
 GEMSPEC = Gem::Specification.new do |spec|
-  spec.name = "ruby-xz"
-  spec.summary = "XZ compression via liblzma for Ruby."
+  spec.name        = "ruby-xz"
+  spec.summary     = "XZ compression via liblzma for Ruby."
   spec.description =<<DESCRIPTION
 This is a basic binding for liblzma that allows you to
 create and extract XZ-compressed archives. It can cope with big
 files as well as small ones, but doesn't offer much
 of the possibilities liblzma itself has.
 DESCRIPTION
-  spec.version = XZ::VERSION.gsub("-", ".")
-  spec.author = "Marvin Gülker"
-  spec.email = "sutniuq@gmx.net"
-  spec.platform = Gem::Platform::RUBY
+  spec.version               = XZ::VERSION.gsub("-", ".")
+  spec.author                = "Marvin Gülker"
+  spec.email                 = "sutniuq@gmx.net"
+  spec.platform              = Gem::Platform::RUBY
   spec.required_ruby_version = ">=1.8.7"
   spec.add_dependency("ffi")
   spec.add_development_dependency("hanna-nouveau")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
-  spec.has_rdoc = true
+  spec.has_rdoc         = true
   spec.extra_rdoc_files = %w[README.rdoc]
   spec.rdoc_options << "-t" << "ruby-xz RDocs" << "-m" << "README.rdoc"
 end
