@@ -212,6 +212,13 @@ class XZ::StreamReader < XZ::Stream
     initialize(@delegate_io, @memory_limit, @flags)
   end
 
+  #NO, you CANNOT seek in this object!!
+  #io-like’s default behaviour is to raise Errno::ESPIPE
+  #when calling a non-defined seek, which is not what some
+  #libraries such as RubyGem’s TarReader expect (they expect
+  #a NoMethodError/NameError instead).
+  undef seek
+
   private
 
   #Called by io-like’s read methods such as #read. Does the heavy work
