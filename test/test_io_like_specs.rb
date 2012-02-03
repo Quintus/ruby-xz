@@ -23,12 +23,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-gem "test-unit"
-
-require "pathname"
-require "test/unit"
-
-require_relative "../lib/xz"
+if RUBY_VERSION >= "1.9"
+  require_relative "./common"
+else
+  require File.join(File.expand_path(File.dirname(__FILE__)), 'common')
+end
 
 #This test checks whether or not we conform to the
 #contracts enforced by the io-like gem.
