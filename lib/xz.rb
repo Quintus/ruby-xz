@@ -156,6 +156,7 @@ module XZ
       LZMAError.raise_if_necessary(res)
       
       res = ""
+      res.encode!("BINARY") if RUBY_VERSION >= "1.9"
       if block_given?
         res = lzma_code(io, stream, &block)
       else
@@ -220,6 +221,7 @@ module XZ
       LZMAError.raise_if_necessary(res)
       
       res = ""
+      res.encode!("BINARY") if RUBY_VERSION >= "1.9"
       if block_given?
         res = lzma_code(io, stream, &block)
       else

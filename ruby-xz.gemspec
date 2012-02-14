@@ -47,6 +47,7 @@ DESCRIPTION
   spec.add_development_dependency("hanna-nouveau")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
+  spec.files << "VERSION"
   spec.has_rdoc         = true
   spec.extra_rdoc_files = %w[README.rdoc]
   spec.rdoc_options << "-t" << "ruby-xz RDocs" << "-m" << "README.rdoc"
