@@ -94,6 +94,13 @@ require "io/like"
 #The namespace and main module of this library. Each method of this module
 #may raise exceptions of class XZ::LZMAError, which is not named in the
 #methods' documentations anymore.
+#
+#All strings you receive from any method defined in this module
+#and the classes defined in it are encoded in BINARY, so you may
+#have to call #force_encoding on them to tag them with the correct
+#encoding (assuming you _know_ what their correct encoding should be).
+#ruby-xz can’t handle this as compiled strings don’t come with encoding
+#information.
 module XZ
   
   
