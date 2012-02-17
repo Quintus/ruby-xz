@@ -44,6 +44,7 @@ DESCRIPTION
   spec.platform              = Gem::Platform::RUBY
   spec.required_ruby_version = ">=1.8.7"
   spec.add_dependency("ffi")
+  spec.add_dependency("io-like")
   spec.add_development_dependency("hanna-nouveau")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
