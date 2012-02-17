@@ -1,167 +1,113 @@
-#Encoding: UTF-8
-=begin (The MIT License)
+# -*- coding: utf-8 -*-
+# (The MIT License)
+# 
+# Basic liblzma-bindings for Ruby.
+# 
+# Copyright © 2011,2012 Marvin Gülker
+# Copyright © 2011 Christoph Plank
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the ‘Software’),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the Software
+# is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
-Basic liblzma-bindings for Ruby.
+if RUBY_VERSION < "1.9"
+  require "rubygems"
+  
+  # The following is the complete sourcode of the require_relative gem
+  # by Steve Klabnik, licensed under the BSD license:
+  #
+  # Copyright (c) 2011, Steve Klabnik
+  # All rights reserved.
+  #
+  # Redistribution and use in source and binary forms, with or without
+  # modification, are permitted provided that the following conditions are
+  # met:
+  #
+  # * Redistributions of source code must retain the above copyright
+  #   notice, this list of conditions and the following disclaimer.
+  # * Redistributions in binary form must reproduce the above copyright
+  #   notice, this list of conditions and the following disclaimer in the
+  #   documentation and/or other materials provided with the distribution.
+  #
+  # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  # A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+  # HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  # LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  # DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  # require\_relative has no effect on Ruby 1.9 (or other versions that provide Kernel#require_relative
+  # out of the box)
+  unless Object.new.respond_to?(:require_relative, true)
+    # Yep, you're looking at it! This gem is pretty small, and for good reason.
+    # There's not much to do! We use split to find the filename that we're
+    # looking to require, raise a LoadError if it's called in a context (like eval)
+    # that it shouldn't be, and then require it via regular old require.
+    #
+    # Now, in 1.9, "." is totally removed from the $LOAD_PATH. We don't do that
+    # here, because that would break a lot of other code! You're still vulnerable
+    # to the security hole that caused this change to happen in the first place.
+    # You will be able to use this gem to transition the code you write over to
+    # the 1.9 syntax, though.
+    def require_relative(relative_feature) # :nodoc:
 
-Copyright © 2011 Marvin Gülker
+      file = caller.first.split(/:\d/,2).first
 
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the ‘Software’),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the Software
-is furnished to do so, subject to the following conditions:
+      raise LoadError, "require_relative is called in #{$1}" if /\A\((.*)\)/ =~ file
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+      require File.expand_path(relative_feature, File.dirname(file))
+    end
+  end
 
-THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-=end
+  unless String.instance_methods.include?(:clear)
+    class String # :nodoc:
+      def clear
+        replace("")
+      end
+    end
+  end
+end
 
+require "pathname"
 require "ffi"
+require 'stringio'
+require "io/like"
 
 #The namespace and main module of this library. Each method of this module
 #may raise exceptions of class XZ::LZMAError, which is not named in the
 #methods' documentations anymore.
+#
+#All strings you receive from any method defined in this module
+#and the classes defined in it are encoded in BINARY, so you may
+#have to call #force_encoding on them to tag them with the correct
+#encoding (assuming you _know_ what their correct encoding should be).
+#ruby-xz can’t handle this as compiled strings don’t come with encoding
+#information.
 module XZ
   
-  #This module wraps functions and enums used by liblzma.
-  module LibLZMA
-    extend FFI::Library
-    
-    #The maximum value of an uint64_t, as defined by liblzma.
-    #Should be the same as
-    #  (2 ** 64) - 1
-    UINT64_MAX = 18446744073709551615
-    
-    #Activates extreme compression. Same as xz's "-e" commandline switch.
-    LZMA_PRESET_EXTREME = 1 << 31
-    
-    LZMA_TELL_NO_CHECK = 0x02
-    LZMA_TELL_UNSUPPORTED_CHECK = 0x02
-    LZMA_TELL_ANY_CHECK = 0x04
-    LZMA_CONCATENATED = 0x08
-    
-    #Placeholder enum used by liblzma for later additions.
-    LZMA_RESERVED_ENUM = enum :lzma_reserved_enum, 0
-    
-    #Actions that can be passed to the lzma_code() function.
-    LZMA_ACTION = enum  :lzma_run, 0,
-                        :lzma_sync_flush,
-                        :lzma_full_flush,
-                        :lzma_finish
-                        
-    #Integrity check algorithms supported by liblzma.
-    LZMA_CHECK = enum :lzma_check_none, 0,
-                      :lzma_check_crc32, 1,
-                      :lzma_check_crc64, 4,
-                      :lzma_check_sha256, 10
-                      
-    #Possible return values of liblzma functions.
-    LZMA_RET = enum :lzma_ok, 0,
-                    :lzma_stream_end,
-                    :lzma_no_check,
-                    :lzma_unsupported_check,
-                    :lzma_get_check,
-                    :lzma_mem_error,
-                    :lzma_memlimit_error,
-                    :lzma_format_error,
-                    :lzma_options_error,
-                    :lzma_data_error,
-                    :lzma_buf_error,
-                    :lzma_prog_error
-    
-    ffi_lib "liblzma"
-    
-    attach_function :lzma_easy_encoder, [:pointer, :uint32, :int], :int
-    attach_function :lzma_code, [:pointer, :int], :int
-    attach_function :lzma_stream_decoder, [:pointer, :uint64, :uint32], :int
-    attach_function :lzma_end, [:pointer], :void
-    
-  end
-  
-  #The class of the error that this library raises.
-  class LZMAError < StandardError
-    
-    #Raises an appropriate exception if +val+ isn't a liblzma success code.
-    def self.raise_if_necessary(val)
-      case val
-      when :lzma_mem_error then raise(self, "Couldn't allocate memory!")
-      when :lzma_memlimit_error then raise(self, "Decoder ran out of (allowed) memory!")
-      when :lzma_format_error then raise(self, "Unrecognized file format!")
-      when :lzma_options_error then raise(self, "Invalid options passed!")
-      when :lzma_data_error then raise raise(self, "Archive is currupt.")
-      when :lzma_buf_error then raise(self, "Buffer unusable!")
-      when :lzma_prog_error then raise(self, "Program error--if you're sure your code is correct, you may have found a bug in liblzma.")
-      end
-    end
-    
-  end
-  
-  #The main struct of the liblzma library.
-  class LZMAStream < FFI::Struct
-    layout  :next_in, :pointer, #uint8
-            :avail_in, :size_t,
-            :total_in, :uint64,
-            :next_out, :pointer, #uint8
-            :avail_out, :size_t,
-            :total_out, :uint64,
-            :lzma_allocator, :pointer,
-            :lzma_internal, :pointer,
-            :reserved_ptr1, :pointer,
-            :reserved_ptr2, :pointer,
-            :reserved_ptr3, :pointer,
-            :reserved_ptr4, :pointer,
-            :reserved_int1, :uint64,
-            :reserved_int2, :uint64,
-            :reserved_int3, :size_t,
-            :reserved_int4, :size_t,
-            :reserved_enum1, :int,
-            :reserved_enum2, :int
-            
-            #This method does basicly the same thing as the
-            #LZMA_STREAM_INIT macro of liblzma. Creates a new LZMAStream
-            #that has been initialized for usage. If any argument is passed,
-            #it is assumed to be a FFI::Pointer to a lzma_stream structure
-            #and that structure is wrapped.
-            def initialize(*args)
-              if args.empty? #Got a pointer, want to wrap it
-                super
-              else
-                s = super()
-                s[:next] = nil
-                s[:avail_in] = 0
-                s[:total_in] = 0
-                s[:next_out] = nil
-                s[:avail_out] = 0
-                s[:total_out] = 0
-                s[:lzma_allocator] = nil
-                s[:lzma_internal] = nil
-                s[:reserved_ptr1] = nil
-                s[:reserved_ptr2] = nil
-                s[:reserved_ptr3] = nil
-                s[:reserved_ptr4] = nil
-                s[:reserved_int1] = 0
-                s[:reserved_int2] = 0
-                s[:reserved_int3] = 0
-                s[:reserved_int4] = 0
-                s[:reserved_enum1] = LibLZMA::LZMA_RESERVED_ENUM[:lzma_reserved_enum]
-                s[:reserved_enum2] = LibLZMA::LZMA_RESERVED_ENUM[:lzma_reserved_enum]
-                s
-              end
-            end
-          end
   
   #Number of bytes read in one chunk.
   CHUNK_SIZE = 4096
   #The version of this library.
-  VERSION = "0.0.1".freeze
+  VERSION = Pathname.new(__FILE__).dirname.expand_path.parent.join("VERSION").read.chomp.freeze
   
   class << self
     
@@ -179,7 +125,7 @@ module XZ
     #[flags]        (<tt>[:tell_unsupported_check]</tt>) Additional flags
     #               passed to liblzma (an array). Possible flags are:
     #               [:tell_no_check] Spit out a warning if the archive hasn't an
-    #                                itnegrity checksum.
+    #                                integrity checksum.
     #               [:tell_unsupported_check] Spit out a warning if the archive
     #                                         has an unsupported checksum type.
     #               [:concatenated] Decompress concatenated archives.
@@ -199,7 +145,7 @@ module XZ
     #The block form is *much* better on memory usage, because it doesn't have
     #to load everything into RAM at once. If you don't know how big your
     #data gets or if you want to decompress much data, use the block form. Of
-    #course you shouldn't store the data your read in RAM then as in the
+    #course you shouldn't store the data you read in RAM then as in the
     #example above.
     def decompress_stream(io, memory_limit = LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check], &block)
       raise(ArgumentError, "Invalid memory limit set!") unless (0..LibLZMA::UINT64_MAX).include?(memory_limit)
@@ -211,12 +157,13 @@ module XZ
       res = LibLZMA.lzma_stream_decoder(
         stream.pointer,
         memory_limit,
-        flags.inject(0){|val, flag| val | LibLZMA.const_get(:"LZMA_#{flag.upcase}")}
+        flags.inject(0){|val, flag| val | LibLZMA.const_get(:"LZMA_#{flag.to_s.upcase}")}
       )
       
       LZMAError.raise_if_necessary(res)
       
       res = ""
+      res.encode!("BINARY") if RUBY_VERSION >= "1.9"
       if block_given?
         res = lzma_code(io, stream, &block)
       else
@@ -274,15 +221,14 @@ module XZ
       raise(ArgumentError, "Invalid checksum specified!") unless [:none, :crc32, :crc64, :sha256].include?(check)
       
       stream = LZMAStream.new
-      res = LibLZMA.lzma_easy_encoder(
-      stream.pointer,
-      compression_level | (extreme ? LibLZMA::LZMA_PRESET_EXTREME : 0),
-      LibLZMA::LZMA_CHECK[:"lzma_check_#{check}"]
-      )
+      res = LibLZMA.lzma_easy_encoder(stream.pointer,
+                                      compression_level | (extreme ? LibLZMA::LZMA_PRESET_EXTREME : 0),
+                                      LibLZMA::LZMA_CHECK[:"lzma_check_#{check}"])
       
       LZMAError.raise_if_necessary(res)
       
       res = ""
+      res.encode!("BINARY") if RUBY_VERSION >= "1.9"
       if block_given?
         res = lzma_code(io, stream, &block)
       else
@@ -300,7 +246,7 @@ module XZ
     #[in_file]  The path to the file to read from.
     #[out_file] The path of the file to write to. If it exists, it will be
     #           overwritten.
-    #For the other parameters, see the compress_stream method.
+    #For the other parameters, see the ::compress_stream method.
     #===Return value
     #The number of bytes written, i.e. the size of the archive.
     #===Example
@@ -385,7 +331,11 @@ module XZ
     def binary_size(str)
       #Believe it or not, but this is faster than str.bytes.to_a.size.
       #I benchmarked it, and it is as twice as fast.
-      str.dup.force_encoding("BINARY").size
+      if str.respond_to? :force_encoding
+        str.dup.force_encoding("BINARY").size
+      else
+        str.bytes.to_a.size
+      end
     end
     
     #This method does the heavy work of (de-)compressing a stream. It takes
@@ -396,16 +346,16 @@ module XZ
     #(de-)compressing of very large files that can't be loaded fully into
     #memory.
     def lzma_code(io, stream)
-      input_buffer_p = FFI::MemoryPointer.new(CHUNK_SIZE)
+      input_buffer_p  = FFI::MemoryPointer.new(CHUNK_SIZE)
       output_buffer_p = FFI::MemoryPointer.new(CHUNK_SIZE)
       
       while str = io.read(CHUNK_SIZE)
         input_buffer_p.write_string(str)
         
         #Set the data for compressing
-        stream[:next_in] = input_buffer_p
+        stream[:next_in]  = input_buffer_p
         stream[:avail_in] = binary_size(str)
-        
+
         #Now loop until we gathered all the data in stream[:next_out]. Depending on the
         #amount of data, this may not fit into the buffer, meaning that we have to
         #provide a pointer to a "new" buffer that liblzma can write into. Since
@@ -413,10 +363,10 @@ module XZ
         #lzma_code() function doesn't hurt (indeed the pipe_comp example from
         #liblzma handles it this way too). Sometimes it happens that the compressed data
         #is bigger than the original (notably when the amount of data to compress
-        #is small)
+        #is small).
         loop do
           #Prepare for getting the compressed_data
-          stream[:next_out] = output_buffer_p
+          stream[:next_out]  = output_buffer_p
           stream[:avail_out] = CHUNK_SIZE
           
           #Compress the data
@@ -444,9 +394,9 @@ module XZ
     def check_lzma_code_retval(code)
       e = LibLZMA::LZMA_RET
       case code
-      when e[:lzma_no_check] then warn("Couldn't verify archive integrity--archive has not integrity checksum.")
+      when e[:lzma_no_check]          then warn("Couldn't verify archive integrity--archive has not integrity checksum.")
       when e[:lzma_unsupported_check] then warn("Couldn't verify archive integrity--archive has an unsupported integrity checksum.")
-      when e[:lzma_get_check] then nil #This isn't useful for us. It indicates that the checksum type is now known.
+      when e[:lzma_get_check]         then nil #This isn't useful for us. It indicates that the checksum type is now known.
       else
         LZMAError.raise_if_necessary(code)
       end
@@ -455,3 +405,8 @@ module XZ
   end #class << self
   
 end
+
+require_relative "xz/lib_lzma"
+require_relative "xz/stream"
+require_relative "xz/stream_writer"
+require_relative "xz/stream_reader"

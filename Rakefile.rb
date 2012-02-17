@@ -24,13 +24,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =end
 
-require "rake/gempackagetask"
 gem "rdoc"
+
+require "rake"
+require "rubygems/package_task"
 require "rdoc/task"
 
 load "ruby-xz.gemspec"
 
-Rake::GemPackageTask.new(GEMSPEC).define
+Gem::PackageTask.new(GEMSPEC).define
 
 Rake::RDocTask.new do |rd|
   rd.rdoc_files.include("lib/**/*.rb", "**/*.rdoc")
@@ -38,4 +40,15 @@ Rake::RDocTask.new do |rd|
   rd.main = "README.rdoc"
   rd.generator = "hanna" #Ignored if hanna-nouveau isn't installed
   rd.rdoc_dir = "doc"
+end
+
+desc "Runs the tests."
+task :test do
+  cd "test"
+  Dir["test_*.rb"].each do |filename|
+    puts "Running '#{filename}'."
+    puts "=" * 80
+    ruby filename
+    puts
+  end
 end
