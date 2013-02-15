@@ -18,6 +18,7 @@ Source0: http://rubygems.org/gems/%{gem_name}-%{version}.gem
 Requires: ruby(rubygems) 
 Requires: rubygem(ffi) 
 Requires: rubygem(io-like) 
+Requires: xz-devel
 BuildRequires: rubygems
 BuildRequires: rubygem(rake)
 BuildArch: noarch
@@ -74,12 +75,12 @@ cp -a ./%{gem_dir}/* %{buildroot}%{gem_dir}/
 %{gem_libdir}
 %exclude %{gem_cache}
 %{gem_spec}
+%{gem_instdir}/VERSION
 
 %files doc
 %doc %{gem_docdir}
 %doc %{gem_instdir}/README.rdoc
 %doc %{gem_instdir}/HISTORY.rdoc
-%doc %{gem_instdir}/VERSION
 
 %changelog
 * Thu Feb 14 2013 Jordan OMara - 0.1.1-1
