@@ -38,7 +38,7 @@ Rake::RDocTask.new do |rd|
   rd.rdoc_files.include("lib/**/*.rb", "**/*.rdoc")
   rd.title = "ruby-xz RDocs"
   rd.main = "README.rdoc"
-  rd.generator = "hanna" #Ignored if hanna-nouveau isn't installed
+  rd.generator = "emerald"
   rd.rdoc_dir = "doc"
 end
 
