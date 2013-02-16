@@ -2,19 +2,19 @@
 # (The MIT license)
 #
 # Basic liblzma-bindings for Ruby.
-# 
-# Copyright © 2012 Marvin Gülker
-# 
+#
+# Copyright © 2012,2013 Marvin Gülker
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense,
 # and/or sell copies of the Software, and to permit persons to whom the Software
 # is furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -47,7 +47,7 @@ class IOLikeSpecsTest < Test::Unit::TestCase
     @reader = XZ::StreamReader.new(@rfile)
     @writer = XZ::StreamWriter.new(@wfile)
   end
-   
+
   def teardown
     @reader.close
     @writer.close
@@ -55,14 +55,14 @@ class IOLikeSpecsTest < Test::Unit::TestCase
     @wfile.close
     LIVE_TEST_FILE.delete
   end
-  
+
   def test_reader_definition
     assert_equal(1, XZ::StreamReader.instance_method(:unbuffered_read).arity)
   end
 
   def test_reader_length
     str = @reader.send(:unbuffered_read, 100_000)
-    assert_compare(100_000, ">=", str.bytes.count)
+    assert(100_000 >= str.bytes.count)
   end
 
   def test_reader_eof
@@ -76,7 +76,7 @@ class IOLikeSpecsTest < Test::Unit::TestCase
 
   def test_writer_writelen
     text = "Foo Baz Baz"
-    assert_compare(text.bytes.count, ">=", @writer.send(:unbuffered_write, text))
+    assert(text.bytes.count >= @writer.send(:unbuffered_write, text))
   end
 
 end

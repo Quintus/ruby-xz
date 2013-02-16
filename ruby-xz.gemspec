@@ -1,20 +1,20 @@
 # -*- mode: ruby; coding: utf-8 -*-
 # (The MIT License)
-# 
+#
 # Basic liblzma-bindings for Ruby.
-# 
-# Copyright © 2011,2012 Marvin Gülker
-# 
+#
+# Copyright © 2011,2012,2013 Marvin Gülker
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense,
 # and/or sell copies of the Software, and to permit persons to whom the Software
 # is furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -40,16 +40,17 @@ of the possibilities liblzma itself has.
 DESCRIPTION
   spec.version               = XZ::VERSION.gsub("-", ".")
   spec.author                = "Marvin Gülker"
-  spec.email                 = "sutniuq@gmx.net"
+  spec.email                 = "quintus@quintilianus.eu"
   spec.platform              = Gem::Platform::RUBY
   spec.required_ruby_version = ">=1.8.7"
   spec.add_dependency("ffi")
   spec.add_dependency("io-like")
   spec.add_development_dependency("emerald")
+  spec.add_development_dependency("turn")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
   spec.files << "VERSION"
   spec.has_rdoc         = true
-  spec.extra_rdoc_files = %w[README.rdoc]
+  spec.extra_rdoc_files = %w[README.rdoc HISTORY.rdoc]
   spec.rdoc_options << "-t" << "ruby-xz RDocs" << "-m" << "README.rdoc"
 end

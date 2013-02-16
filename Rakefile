@@ -3,7 +3,7 @@
 
 Basic liblzma-bindings for Ruby.
 
-Copyright © 2011, 2013 Marvin Gülker
+Copyright © 2011,2013 Marvin Gülker
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the ‘Software’),
@@ -46,9 +46,6 @@ desc "Runs the tests."
 task :test do
   cd "test"
   Dir["test_*.rb"].each do |filename|
-    puts "Running '#{filename}'."
-    puts "=" * 80
     ruby filename
-    puts
   end
 end
