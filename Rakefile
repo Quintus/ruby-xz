@@ -1,9 +1,9 @@
-#Encoding: UTF-8
+# -*- mode: ruby; coding: utf-8 -*-
 =begin (The MIT License)
 
 Basic liblzma-bindings for Ruby.
 
-Copyright © 2011 Marvin Gülker
+Copyright © 2011, 2013 Marvin Gülker
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the ‘Software’),
