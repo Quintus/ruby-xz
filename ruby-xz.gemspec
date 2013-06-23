@@ -38,7 +38,7 @@ DESCRIPTION
   spec.author                = "Marvin Gülker"
   spec.email                 = "quintus@quintilianus.eu"
   spec.license               = "MIT"
-  spec.homepage              = "https://github.com/Quintus/ruby-xz"
+  spec.homepage              = "http://quintus.github.io/ruby-xz"
   spec.platform              = Gem::Platform::RUBY
   spec.required_ruby_version = ">=1.9.3"
   spec.add_dependency("ffi")

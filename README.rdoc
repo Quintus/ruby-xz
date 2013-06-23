@@ -29,6 +29,9 @@ everything you need to use ruby-xz. As said, it's not big, but powerful:
 You can create and extract whole archive files, compress or decompress
 streams of data or just plain strings.
 
+You can read the documentation on your local gemserver, or online at
+http://quintus.github.io/ruby-xz/.
+
 === First step
 
 You have to require ruby-xz. Note the file you have to require is named
