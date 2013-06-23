@@ -47,8 +47,8 @@ DESCRIPTION
   spec.add_development_dependency("turn")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
-  spec.files << "VERSION"
+  spec.files << "COPYING" << "VERSION"
   spec.has_rdoc         = true
-  spec.extra_rdoc_files = %w[README.rdoc HISTORY.rdoc]
+  spec.extra_rdoc_files = %w[README.rdoc HISTORY.rdoc COPYING]
   spec.rdoc_options << "-t" << "ruby-xz RDocs" << "-m" << "README.rdoc"
 end
