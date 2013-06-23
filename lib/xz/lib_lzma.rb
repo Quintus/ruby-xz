@@ -71,7 +71,7 @@ module XZ
     :lzma_buf_error,
     :lzma_prog_error
     
-    ffi_lib ['lzma.so.2', 'lzma.so', 'lzma']
+    ffi_lib ['lzma.so.5', 'lzma.so', 'lzma']
     
     attach_function :lzma_easy_encoder, [:pointer, :uint32, :int], :int
     attach_function :lzma_code, [:pointer, :int], :int
@@ -125,11 +125,11 @@ module XZ
     #it is assumed to be a FFI::Pointer to a lzma_stream structure
     #and that structure is wrapped.
     def initialize(*args)
-      if args.empty? #Got a pointer, want to wrap it
+      if !args.empty? #Got a pointer, want to wrap it
         super
       else
         s = super()
-        s[:next]           = nil
+        s[:next_in]        = nil
         s[:avail_in]       = 0
         s[:total_in]       = 0
         s[:next_out]       = nil

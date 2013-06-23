@@ -1,5 +1,6 @@
 == Next version
 
+* Fix #6 (errors on JRuby) by Ben Nagy
 * <b>Remove 1.8 compatibility</b>
 
 == 0.1.0
