@@ -23,11 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-if RUBY_VERSION >= "1.9"
-  require_relative './lib/xz'
-else
-  require File.join(File.expand_path(File.dirname(__FILE__)), 'lib', 'xz')
-end
+require_relative './lib/xz'
 
 GEMSPEC = Gem::Specification.new do |spec|
   spec.name        = "ruby-xz"

@@ -23,11 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-if RUBY_VERSION >= "1.9"
-  require_relative "./common"
-else
-  require File.join(File.expand_path(File.dirname(__FILE__)), 'common')
-end
+require_relative "./common"
 
 #This test checks whether or not we conform to the
 #contracts enforced by the io-like gem.
