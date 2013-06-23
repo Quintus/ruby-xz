@@ -1,9 +1,9 @@
-#Encoding: UTF-8
+# -*- mode: ruby; coding: utf-8 -*-
 =begin (The MIT License)
 
 Basic liblzma-bindings for Ruby.
 
-Copyright © 2011 Marvin Gülker
+Copyright © 2011,2013 Marvin Gülker
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the ‘Software’),
@@ -35,10 +35,10 @@ load "ruby-xz.gemspec"
 Gem::PackageTask.new(GEMSPEC).define
 
 Rake::RDocTask.new do |rd|
-  rd.rdoc_files.include("lib/**/*.rb", "**/*.rdoc")
+  rd.rdoc_files.include("lib/**/*.rb", "**/*.rdoc", "COPYING")
   rd.title = "ruby-xz RDocs"
   rd.main = "README.rdoc"
-  rd.generator = "hanna" #Ignored if hanna-nouveau isn't installed
+  rd.generator = "emerald"
   rd.rdoc_dir = "doc"
 end
 
@@ -46,9 +46,6 @@ desc "Runs the tests."
 task :test do
   cd "test"
   Dir["test_*.rb"].each do |filename|
-    puts "Running '#{filename}'."
-    puts "=" * 80
     ruby filename
-    puts
   end
 end

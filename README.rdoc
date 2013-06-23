@@ -20,10 +20,7 @@ Install it the way you install all your gems.
 
   # gem install ruby-xz
 
-Although it is designed for Ruby 1.9 (which I highly recommend),
-ruby-xz should also work with Ruby 1.8.7. However, the Ruby 1.8
-compatibility may be skipped anytime (causing at least a minor version
-bump), so you shouldn’t rely on it.
+Ruby 1.9+ is required.
 
 == Usage
 
@@ -66,7 +63,7 @@ what is possible.
 
 Basic liblzma-bindings for Ruby.
 
-Copyright © 2011,2012 Marvin Gülker
+Copyright © 2011-2013 Marvin Gülker
 
 Copyright © 2011 Christoph Plank
 
@@ -87,35 +84,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
-==== require_relative
-
-This library includes the sourcecode of Steve Klabnik’s
-{require_relative gem}[http://steveklabnik.github.com/require_relative/]
-in order to make it 1.8-compatible. It’s licensed under the BSD license:
-
-Copyright (c) 2011, Steve Klabnik
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-* Redistributions of source code must retain the above copyright
-  notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright
-  notice, this list of conditions and the following disclaimer in the
-  documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

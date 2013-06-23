@@ -1,3 +1,8 @@
+== 0.2.0
+
+* Fix #6 (errors on JRuby) by Ben Nagy
+* <b>Remove 1.8 compatibility</b>
+
 == 0.1.0
 
 * <b>Add XZ::StreamReader and XZ::StreamWriter for io-like behaviour.</b>
