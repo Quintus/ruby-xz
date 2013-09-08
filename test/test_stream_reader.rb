@@ -25,7 +25,7 @@
 
 require File.join(File.expand_path(File.dirname(__FILE__)), 'common')
 
-class StreamReaderTest < Test::Unit::TestCase
+class StreamReaderTest < Minitest::Test
 
   TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
   PLAIN_TEXT_FILE = TEST_DATA_DIR + "lorem_ipsum.txt"
@@ -82,13 +82,11 @@ class StreamReaderTest < Test::Unit::TestCase
       assert(!r.instance_variable_get(:@file).closed?, "Closed internal file during rewind")
     end
 
-    # Test double closing
-    assert_nothing_raised do
-      XZ::StreamReader.open(XZ_TEXT_FILE) do |r|
-        r.close
-      end
+    # Test double closing (this should not raise)
+    XZ::StreamReader.open(XZ_TEXT_FILE) do |r|
+      r.close
     end
-    
+
   end
 
   def test_open
