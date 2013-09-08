@@ -1,3 +1,7 @@
+== Next version
+
+* Release the GIL when interfacing with liblzma (PR #7 by Lars Christensen (larsch))
+
 == 0.2.0
 
 * Fix #6 (errors on JRuby) by Ben Nagy
