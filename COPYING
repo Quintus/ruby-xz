@@ -2,9 +2,9 @@
 
 Basic liblzma-bindings for Ruby.
 
-Copyright © 2011-2013 Marvin Gülker
+Copyright © 2011-2013 Marvin Gülker et al.
 
-Copyright © 2011 Christoph Plank
+See the file `AUTHORS' for the full list of contributors.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
