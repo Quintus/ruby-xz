@@ -73,10 +73,10 @@ module XZ
     
     ffi_lib ['lzma.so.5', 'lzma.so', 'lzma']
     
-    attach_function :lzma_easy_encoder, [:pointer, :uint32, :int], :int
-    attach_function :lzma_code, [:pointer, :int], :int
-    attach_function :lzma_stream_decoder, [:pointer, :uint64, :uint32], :int
-    attach_function :lzma_end, [:pointer], :void
+    attach_function :lzma_easy_encoder, [:pointer, :uint32, :int], :int, :blocking => true
+    attach_function :lzma_code, [:pointer, :int], :int, :blocking => true
+    attach_function :lzma_stream_decoder, [:pointer, :uint64, :uint32], :int, :blocking => true
+    attach_function :lzma_end, [:pointer], :void, :blocking => true
     
   end
 
