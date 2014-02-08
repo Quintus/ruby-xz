@@ -38,7 +38,7 @@ You have to require ruby-xz. Note the file you have to require is named
 "xz.rb", so do
 
   require "xz"
-  
+
 to get it.
 
 === Examples
@@ -47,11 +47,11 @@ to get it.
   XZ.compress_file("myfile.tar", "myfile.tar.xz")
   #Decompress it
   XZ.decompress_file("myfile.tar.xz", "myfile.tar")
-  
+
   #Compress everything you get from a socket (note that there HAS to be a EOF
   #sometime, otherwise this will run infinitely)
   XZ.compress_stream(socket){|chunk| opened_file.write(chunk)}
-  
+
   #Compress a string
   comp = XZ.compress("Mydata")
   #Decompress it
@@ -60,13 +60,19 @@ to get it.
 Have a look at the XZ module's documentation for an in-depth description of
 what is possible.
 
-=== License
+== Links
+
+* Code repository: https://github.com/Quintus/ruby-xz
+* Issue tracker: https://github.com/Quintus/ruby-xz/issues
+* Online documentation: http://quintus.github.io/ruby-xz
+
+== License
 
 (The MIT License)
 
 Basic liblzma-bindings for Ruby.
 
-Copyright © 2011-2013 Marvin Gülker et al.
+Copyright © 2011-2014 Marvin Gülker et al.
 
 See AUTHORS for the full list of contributors.
 
