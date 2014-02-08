@@ -25,7 +25,7 @@
 
 require File.join(File.expand_path(File.dirname(__FILE__)), 'common')
 
-class StreamReaderTest < Test::Unit::TestCase
+class StreamReaderTest < Minitest::Test
 
   TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
   PLAIN_TEXT_FILE = TEST_DATA_DIR + "lorem_ipsum.txt"
@@ -34,15 +34,15 @@ class StreamReaderTest < Test::Unit::TestCase
   def test_new
     File.open(XZ_TEXT_FILE) do |file|
       reader = XZ::StreamReader.new(file)
-      
+
       assert_equal("Lorem ipsum", reader.read(11))
       assert_equal(" dolor sit amet", reader.read(15))
-      
+
       rest = reader.read
       assert_equal("Lorem ipsum dolor sit amet.\n", rest[-28..-1])
       assert_equal("", reader.read) # We’re at EOF
       assert(reader.eof?, "EOF is not EOF!")
-      
+
       reader.close
     end
   end
@@ -82,13 +82,11 @@ class StreamReaderTest < Test::Unit::TestCase
       assert(!r.instance_variable_get(:@file).closed?, "Closed internal file during rewind")
     end
 
-    # Test double closing
-    assert_nothing_raised do
-      XZ::StreamReader.open(XZ_TEXT_FILE) do |r|
-        r.close
-      end
+    # Test double closing (this should not raise)
+    XZ::StreamReader.open(XZ_TEXT_FILE) do |r|
+      r.close
     end
-    
+
   end
 
   def test_open

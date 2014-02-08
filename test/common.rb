@@ -27,5 +27,4 @@ require_relative "../lib/xz"
 
 require "pathname"
 require "tempfile"
-require "minitest/unit"
-require "turn/autorun"
+require "minitest/autorun"

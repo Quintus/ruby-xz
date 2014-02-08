@@ -31,7 +31,7 @@ require_relative "./common"
 #different compression options and/or different versions of
 #liblzma. Hence, I can only test whether the re-decompressed
 #result is equal to what I originally had.
-class StreamWriterTest < Test::Unit::TestCase
+class StreamWriterTest < Minitest::Test
 
   TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
   PLAIN_TEXT_FILE = TEST_DATA_DIR + "lorem_ipsum.txt"
@@ -42,10 +42,10 @@ class StreamWriterTest < Test::Unit::TestCase
     text   = File.read(PLAIN_TEXT_FILE)
     text1  = text[0...10]
     text2  = text[10..-1]
-    
+
     File.open(LIVE_TEST_FILE, "wb") do |file|
       writer = XZ::StreamWriter.new(file)
-      
+
       assert_equal(text1.bytes.count, writer.write(text1))
       assert_equal(text2.bytes.count, writer.write(text2))
       assert(text.bytes.count > writer.close)
@@ -77,18 +77,16 @@ class StreamWriterTest < Test::Unit::TestCase
     writer.close
     assert(writer.instance_variable_get(:@file).closed?, "Didn't close internally opened file!")
 
-    # Test double closing
-    assert_nothing_raised do
-      XZ::StreamWriter.open(LIVE_TEST_FILE) do |w|
-        w.write("Foo")
-        w.close
-      end
+    # Test double closing (this should not raise)
+    XZ::StreamWriter.open(LIVE_TEST_FILE) do |w|
+      w.write("Foo")
+      w.close
     end
   end
 
   def test_stream_writer_open
     text = File.read(PLAIN_TEXT_FILE)
-    
+
     XZ::StreamWriter.open(LIVE_TEST_FILE) do |file|
       file.write(text)
     end

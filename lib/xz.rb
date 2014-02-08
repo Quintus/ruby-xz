@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 # (The MIT License)
-# 
+#
 # Basic liblzma-bindings for Ruby.
-# 
+#
 # Copyright © 2011,2012 Marvin Gülker
 # Copyright © 2011 Christoph Plank
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense,
 # and/or sell copies of the Software, and to permit persons to whom the Software
 # is furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -40,15 +40,14 @@ require "io/like"
 #ruby-xz can’t handle this as compiled strings don’t come with encoding
 #information.
 module XZ
-  
-  
+  #The version of this library.
+  VERSION = "0.2.1"
+
   #Number of bytes read in one chunk.
   CHUNK_SIZE = 4096
-  #The version of this library.
-  VERSION = Pathname.new(__FILE__).dirname.expand_path.parent.join("VERSION").read.chomp.freeze
-  
+
   class << self
-    
+
     #call-seq:
     #  decompress_stream(io [, memory_limit [, flags ] ] )               → a_string
     #  decompress_stream(io [, memory_limit [, flags ] ] ){|chunk| ... } → an_integer
@@ -90,30 +89,30 @@ module XZ
       flags.each do |flag|
         raise(ArgumentError, "Unknown flag #{flag}!") unless [:tell_no_check, :tell_unsupported_check, :tell_any_check, :concatenated].include?(flag)
       end
-      
+
       stream = LZMAStream.new
       res = LibLZMA.lzma_stream_decoder(
         stream.pointer,
         memory_limit,
         flags.inject(0){|val, flag| val | LibLZMA.const_get(:"LZMA_#{flag.to_s.upcase}")}
       )
-      
+
       LZMAError.raise_if_necessary(res)
-      
+
       res = ""
-      res.encode!("BINARY")
+      res.encode!(Encoding::BINARY)
       if block_given?
         res = lzma_code(io, stream, &block)
       else
         lzma_code(io, stream){|chunk| res << chunk}
       end
-      
+
       LibLZMA.lzma_end(stream.pointer)
-      
+
       block_given? ? stream[:total_out] : res
     end
     alias decode_stream decompress_stream
-    
+
     #call-seq:
     #  compress_stream(io [, compression_level [, check [, extreme ] ] ] ) → a_string
     #  compress_stream(io [, compression_level [, check [, extreme ] ] ] ){|chunk| ... } → an_integer
@@ -157,28 +156,28 @@ module XZ
     def compress_stream(io, compression_level = 6, check = :crc64, extreme = false, &block)
       raise(ArgumentError, "Invalid compression level!") unless (0..9).include?(compression_level)
       raise(ArgumentError, "Invalid checksum specified!") unless [:none, :crc32, :crc64, :sha256].include?(check)
-      
+
       stream = LZMAStream.new
       res = LibLZMA.lzma_easy_encoder(stream.pointer,
                                       compression_level | (extreme ? LibLZMA::LZMA_PRESET_EXTREME : 0),
                                       LibLZMA::LZMA_CHECK[:"lzma_check_#{check}"])
-      
+
       LZMAError.raise_if_necessary(res)
-      
+
       res = ""
-      res.encode!("BINARY")
+      res.encode!(Encoding::BINARY)
       if block_given?
         res = lzma_code(io, stream, &block)
       else
         lzma_code(io, stream){|chunk| res << chunk}
       end
-      
+
       LibLZMA.lzma_end(stream.pointer)
-      
+
       block_given? ? stream[:total_out] : res
     end
     alias encode_stream compress_stream
-    
+
     #Compresses +in_file+ and writes the result to +out_file+.
     #===Parameters
     #[in_file]  The path to the file to read from.
@@ -202,7 +201,7 @@ module XZ
         end
       end
     end
-    
+
     #Compresses arbitrary data using the XZ algorithm.
     #===Parameters
     #[str] The data to compress.
@@ -220,7 +219,7 @@ module XZ
       s = StringIO.new(str)
       compress_stream(s, compression_level, check, extreme)
     end
-    
+
     #Decompresses data in XZ format.
     #===Parameters
     #[str] The data to decompress.
@@ -238,7 +237,7 @@ module XZ
       s = StringIO.new(str)
       decompress_stream(s, memory_limit, flags)
     end
-    
+
     #Decompresses +in_file+ and writes the result to +out_file+.
     #===Parameters
     #[in_file]  The path to the file to read from.
@@ -262,20 +261,20 @@ module XZ
         end
       end
     end
-    
+
     private
-    
+
     #This method returns the size of +str+ in bytes.
     def binary_size(str)
       #Believe it or not, but this is faster than str.bytes.to_a.size.
       #I benchmarked it, and it is as twice as fast.
       if str.respond_to? :force_encoding
-        str.dup.force_encoding("BINARY").size
+        str.dup.force_encoding(Encoding::BINARY).size
       else
         str.bytes.to_a.size
       end
     end
-    
+
     #This method does the heavy work of (de-)compressing a stream. It takes
     #an IO object to read data from (that means the IO must be opened
     #for reading) and a XZ::LZMAStream object that is used to (de-)compress
@@ -286,10 +285,10 @@ module XZ
     def lzma_code(io, stream)
       input_buffer_p  = FFI::MemoryPointer.new(CHUNK_SIZE)
       output_buffer_p = FFI::MemoryPointer.new(CHUNK_SIZE)
-      
+
       while str = io.read(CHUNK_SIZE)
         input_buffer_p.write_string(str)
-        
+
         #Set the data for compressing
         stream[:next_in]  = input_buffer_p
         stream[:avail_in] = binary_size(str)
@@ -306,7 +305,7 @@ module XZ
           #Prepare for getting the compressed_data
           stream[:next_out]  = output_buffer_p
           stream[:avail_out] = CHUNK_SIZE
-          
+
           #Compress the data
           res = if io.eof?
             LibLZMA.lzma_code(stream.pointer, LibLZMA::LZMA_ACTION[:lzma_finish])
@@ -314,11 +313,11 @@ module XZ
             LibLZMA.lzma_code(stream.pointer, LibLZMA::LZMA_ACTION[:lzma_run])
           end
           check_lzma_code_retval(res)
-          
+
           #Write the compressed data
           data = output_buffer_p.read_string(CHUNK_SIZE - stream[:avail_out])
           yield(data)
-          
+
           #If the buffer is completely filled, it's likely that there is
           #more data liblzma wants to hand to us. Start a new iteration,
           #but don't provide new input data.
@@ -326,7 +325,7 @@ module XZ
         end #loop
       end #while
     end #lzma_code
-    
+
     #Checks for errors and warnings that can be derived from the return
     #value of the lzma_code() function and shows them if necessary.
     def check_lzma_code_retval(code)
@@ -339,9 +338,9 @@ module XZ
         LZMAError.raise_if_necessary(code)
       end
     end
-    
+
   end #class << self
-  
+
 end
 
 require_relative "xz/lib_lzma"

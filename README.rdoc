@@ -29,6 +29,9 @@ everything you need to use ruby-xz. As said, it's not big, but powerful:
 You can create and extract whole archive files, compress or decompress
 streams of data or just plain strings.
 
+You can read the documentation on your local gemserver, or online at
+http://quintus.github.io/ruby-xz/.
+
 === First step
 
 You have to require ruby-xz. Note the file you have to require is named
@@ -63,9 +66,9 @@ what is possible.
 
 Basic liblzma-bindings for Ruby.
 
-Copyright © 2011-2013 Marvin Gülker
+Copyright © 2011-2013 Marvin Gülker et al.
 
-Copyright © 2011 Christoph Plank
+See AUTHORS for the full list of contributors.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the ‘Software’),
