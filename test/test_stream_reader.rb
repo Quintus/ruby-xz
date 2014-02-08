@@ -34,15 +34,15 @@ class StreamReaderTest < Minitest::Test
   def test_new
     File.open(XZ_TEXT_FILE) do |file|
       reader = XZ::StreamReader.new(file)
-      
+
       assert_equal("Lorem ipsum", reader.read(11))
       assert_equal(" dolor sit amet", reader.read(15))
-      
+
       rest = reader.read
       assert_equal("Lorem ipsum dolor sit amet.\n", rest[-28..-1])
       assert_equal("", reader.read) # We’re at EOF
       assert(reader.eof?, "EOF is not EOF!")
-      
+
       reader.close
     end
   end
