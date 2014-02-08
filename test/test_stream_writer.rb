@@ -31,7 +31,7 @@ require_relative "./common"
 #different compression options and/or different versions of
 #liblzma. Hence, I can only test whether the re-decompressed
 #result is equal to what I originally had.
-class StreamWriterTest < Minitest::Test
+class StreamWriterTest < Minitest::Unit::TestCase
 
   TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
   PLAIN_TEXT_FILE = TEST_DATA_DIR + "lorem_ipsum.txt"

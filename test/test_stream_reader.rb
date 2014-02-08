@@ -25,7 +25,7 @@
 
 require File.join(File.expand_path(File.dirname(__FILE__)), 'common')
 
-class StreamReaderTest < Minitest::Test
+class StreamReaderTest < Minitest::Unit::TestCase
 
   TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
   PLAIN_TEXT_FILE = TEST_DATA_DIR + "lorem_ipsum.txt"

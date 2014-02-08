@@ -30,7 +30,7 @@ require_relative "./common"
 #
 #Note that this test checks a private API (the one exposed
 #to the IO::Like library), hence the many calls to #send.
-class IOLikeSpecsTest < Minitest::Test
+class IOLikeSpecsTest < Minitest::Unit::TestCase
 
   TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
   PLAIN_TEXT_FILE = TEST_DATA_DIR + "lorem_ipsum.txt"
