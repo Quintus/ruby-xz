@@ -23,8 +23,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-require_relative './lib/xz'
-
 GEMSPEC = Gem::Specification.new do |spec|
   spec.name        = "ruby-xz"
   spec.summary     = "XZ compression via liblzma for Ruby."
