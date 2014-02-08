@@ -42,10 +42,10 @@ class StreamWriterTest < Minitest::Test
     text   = File.read(PLAIN_TEXT_FILE)
     text1  = text[0...10]
     text2  = text[10..-1]
-    
+
     File.open(LIVE_TEST_FILE, "wb") do |file|
       writer = XZ::StreamWriter.new(file)
-      
+
       assert_equal(text1.bytes.count, writer.write(text1))
       assert_equal(text2.bytes.count, writer.write(text2))
       assert(text.bytes.count > writer.close)
@@ -86,7 +86,7 @@ class StreamWriterTest < Minitest::Test
 
   def test_stream_writer_open
     text = File.read(PLAIN_TEXT_FILE)
-    
+
     XZ::StreamWriter.open(LIVE_TEST_FILE) do |file|
       file.write(text)
     end

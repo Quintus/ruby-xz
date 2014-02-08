@@ -23,7 +23,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-require_relative './lib/xz'
+lib = "xz"
+lib_file = File.expand_path("../lib/#{lib}.rb", __FILE__)
+File.read(lib_file) =~ /\bVERSION\s*=\s*["'](.+?)["']/
+version = $1
 
 GEMSPEC = Gem::Specification.new do |spec|
   spec.name        = "ruby-xz"
@@ -34,7 +37,7 @@ create and extract XZ-compressed archives. It can cope with big
 files as well as small ones, but doesn't offer much
 of the possibilities liblzma itself has.
 DESCRIPTION
-  spec.version               = XZ::VERSION.gsub("-", ".")
+  spec.version               = version
   spec.author                = "Marvin Gülker"
   spec.email                 = "quintus@quintilianus.eu"
   spec.license               = "MIT"
@@ -47,7 +50,7 @@ DESCRIPTION
   spec.add_development_dependency("turn")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
-  spec.files << "COPYING" << "VERSION"
+  spec.files << "COPYING"
   spec.has_rdoc         = true
   spec.extra_rdoc_files = %w[README.rdoc HISTORY.rdoc COPYING]
   spec.rdoc_options << "-t" << "ruby-xz RDocs" << "-m" << "README.rdoc"

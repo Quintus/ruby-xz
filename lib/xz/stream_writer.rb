@@ -2,19 +2,19 @@
 # (The MIT license)
 #
 # Basic liblzma-bindings for Ruby.
-# 
+#
 # Copyright © 2012 Marvin Gülker
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense,
 # and/or sell copies of the Software, and to permit persons to whom the Software
 # is furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -105,9 +105,9 @@ class XZ::StreamWriter < XZ::Stream
       @file = File.open(delegate, "wb")
       super(@file)
     end
-    
+
     # Initialize the internal LZMA stream for encoding
-    res = XZ::LibLZMA.lzma_easy_encoder(@lzma_stream.pointer, 
+    res = XZ::LibLZMA.lzma_easy_encoder(@lzma_stream.pointer,
                                   compression_level | (extreme ? XZ::LibLZMA::LZMA_PRESET_EXTREME : 0),
                                   XZ::LibLZMA::LZMA_CHECK[:"lzma_check_#{check}"])
     XZ::LZMAError.raise_if_necessary(res)
@@ -134,26 +134,26 @@ class XZ::StreamWriter < XZ::Stream
   #you have to do that yourself.
   def close
     super
-    
+
     #1. Close the current block ("file") (an XZ stream may actually include
     #   multiple compressed files, which however is not supported by
     #   this library). For this we have to tell liblzma that
     #   the next bytes we pass to it are the last bytes (by means of
     #   the FINISH action). Just that we don’t pass any new input ;-)
-    
+
     output_buffer_p         = FFI::MemoryPointer.new(XZ::CHUNK_SIZE)
-    
+
     # Get any pending data (LZMA_FINISH causes libzlma to flush its
     # internal buffers) and write it out to our wrapped IO.
     loop do
       @lzma_stream[:next_out]  = output_buffer_p
       @lzma_stream[:avail_out] = output_buffer_p.size
-      
+
       res = XZ::LibLZMA.lzma_code(@lzma_stream.pointer, XZ::LibLZMA::LZMA_ACTION[:lzma_finish])
       XZ::LZMAError.raise_if_necessary(res)
-      
+
       @delegate_io.write(output_buffer_p.read_string(output_buffer_p.size - @lzma_stream[:avail_out]))
-      
+
       break unless @lzma_stream[:avail_out] == 0
     end
 
@@ -198,7 +198,7 @@ class XZ::StreamWriter < XZ::Stream
       # Compress the data
       res = XZ::LibLZMA.lzma_code(@lzma_stream.pointer, XZ::LibLZMA::LZMA_ACTION[:lzma_run])
       XZ::LZMAError.raise_if_necessary(res) # TODO: Warnings
-      
+
       # Write the compressed data
       result = output_buffer_p.read_string(output_buffer_p.size - @lzma_stream[:avail_out])
       @delegate_io.write(result)
@@ -211,5 +211,5 @@ class XZ::StreamWriter < XZ::Stream
   rescue XZ::LZMAError => e
     raise(SystemCallError, e.message)
   end
-  
+
 end

@@ -2,19 +2,19 @@
 # (The MIT license)
 #
 # Basic liblzma-bindings for Ruby.
-# 
+#
 # Copyright © 2012 Marvin Gülker
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
 # to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense,
 # and/or sell copies of the Software, and to permit persons to whom the Software
 # is furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -55,7 +55,7 @@
 #
 #  require "xz"
 #  require "archive/tar/minitar"
-#  
+#
 #  XZ::StreamReader.open("foo.tar.xz") do |txz|
 #    # This automatically closes txz
 #    Archive::Tar::Minitar.unpack(txz, "foo")
@@ -103,7 +103,7 @@ class XZ::StreamReader < XZ::Stream
     flags.each do |flag|
       raise(ArgumentError, "Unknown flag #{flag}!") unless [:tell_no_check, :tell_unsupported_check, :tell_any_check, :concatenated].include?(flag)
     end
-    
+
     if delegate.respond_to?(:to_io)
       super(delegate)
     else
@@ -118,7 +118,7 @@ class XZ::StreamReader < XZ::Stream
                                           @memory_limit,
                                           @flags.inject(0){|val, flag| val | XZ::LibLZMA.const_get(:"LZMA_#{flag.to_s.upcase}")})
     XZ::LZMAError.raise_if_necessary(res)
-    
+
     @input_buffer_p = FFI::MemoryPointer.new(XZ::CHUNK_SIZE)
 
     # These two are only used in #unbuffered read.
@@ -134,7 +134,7 @@ class XZ::StreamReader < XZ::Stream
     end
   end
   self.class.send(:alias_method, :open, :new)
-  
+
   #Closes this StreamReader instance. Don’t use it afterwards
   #anymore.
   #==Return value
@@ -146,7 +146,7 @@ class XZ::StreamReader < XZ::Stream
   #you have to close it yourself.
   def close
     super
-    
+
     # Close the XZ stream
     res = XZ::LibLZMA.lzma_end(@lzma_stream.pointer)
     XZ::LZMAError.raise_if_necessary(res)
@@ -194,7 +194,7 @@ class XZ::StreamReader < XZ::Stream
     # Be always sure to test this when a new version of
     # io-like is released!
     __io_like__internal_read_buffer.clear
-    
+
     # Forcibly close the XZ stream (internally frees it!)
     res = XZ::LibLZMA.lzma_end(@lzma_stream.pointer)
     XZ::LZMAError.raise_if_necessary(res)
@@ -205,7 +205,7 @@ class XZ::StreamReader < XZ::Stream
     rescue => e
       raise(IOError, "Delegate IO failed to rewind! Original message: #{e.message}")
     end
-    
+
     # Reinitialize everything. Note this doesn’t affect @file as it
     # is already set and stays so (we don’t pass a filename here,
     # but rather an IO)
@@ -226,7 +226,7 @@ class XZ::StreamReader < XZ::Stream
   #uncompressed data.
   def unbuffered_read(length)
     raise(EOFError, "Input data completely processed!") if @__lzma_finished
-    
+
     output_buffer_p = FFI::MemoryPointer.new(length) # User guarantees that this fits into RAM
 
     @lzma_stream[:next_out]  = output_buffer_p
