@@ -20,9 +20,19 @@ Installation
 
 Install it the way you install all your gems.
 
-  # gem install ruby-xz
+```
+$ gem install ruby-xz
+```
 
-Ruby 1.9+ is required.
+Alternatively, you can clone the repository and build the most recent
+code yourself:
+
+```
+$ git clone git://github.com/Quintus/ruby-xz.git
+$ cd ruby-xz
+$ rake gem
+$ gem install pkg/ruby-xz-*.gem
+```
 
 Usage
 -----
