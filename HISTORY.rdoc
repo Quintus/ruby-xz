@@ -1,4 +1,4 @@
-== Next version
+== 0.2.1
 
 * Build the gem properly on Ruby 2.0+ (PR #8 by Nana Sakisaka (saki7))
 * Release the GIL when interfacing with liblzma (PR #7 by Lars Christensen (larsch))
