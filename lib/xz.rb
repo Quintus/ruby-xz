@@ -40,12 +40,11 @@ require "io/like"
 #ruby-xz can’t handle this as compiled strings don’t come with encoding
 #information.
 module XZ
-
+  #The version of this library.
+  VERSION = "0.2.0"
 
   #Number of bytes read in one chunk.
   CHUNK_SIZE = 4096
-  #The version of this library.
-  VERSION = Pathname.new(__FILE__).dirname.expand_path.parent.join("VERSION").read.chomp.freeze
 
   class << self
 
