@@ -1,3 +1,4 @@
 /*.gem
 doc
 test/test-data/lorem2.txt.xz
+pkg/

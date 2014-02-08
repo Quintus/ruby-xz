@@ -41,7 +41,7 @@ require "io/like"
 #information.
 module XZ
   #The version of this library.
-  VERSION = "0.2.0"
+  VERSION = "0.2.1-dev"
 
   #Number of bytes read in one chunk.
   CHUNK_SIZE = 4096

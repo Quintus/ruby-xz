@@ -26,7 +26,7 @@
 lib = "xz"
 lib_file = File.expand_path("../lib/#{lib}.rb", __FILE__)
 File.read(lib_file) =~ /\bVERSION\s*=\s*["'](.+?)["']/
-version = $1
+version = $1.gsub("-", ".")
 
 GEMSPEC = Gem::Specification.new do |spec|
   spec.name        = "ruby-xz"
