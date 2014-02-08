@@ -1,14 +1,16 @@
-== 0.2.1
+= Version history
+
+== 0.2.1 (2014-02-08)
 
 * Build the gem properly on Ruby 2.0+ (PR #8 by Nana Sakisaka (saki7))
 * Release the GIL when interfacing with liblzma (PR #7 by Lars Christensen (larsch))
 
-== 0.2.0
+== 0.2.0 (2013-06-23)
 
 * Fix #6 (errors on JRuby) by Ben Nagy
 * <b>Remove 1.8 compatibility</b>
 
-== 0.1.0
+== 0.1.0 (2013-02-17)
 
 * <b>Add XZ::StreamReader and XZ::StreamWriter for io-like behaviour.</b>
 * New dependency on the +io-like+ gem.
