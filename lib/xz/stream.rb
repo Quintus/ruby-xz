@@ -58,7 +58,7 @@ class XZ::Stream
     #Believe it or not, but this is faster than str.bytes.to_a.size.
     #I benchmarked it, and it is as twice as fast.
     if str.respond_to? :force_encoding
-      str.dup.force_encoding("BINARY").size
+      str.dup.force_encoding(Encoding::BINARY).size
     else
       str.bytes.to_a.size
     end

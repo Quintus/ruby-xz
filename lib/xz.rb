@@ -100,7 +100,7 @@ module XZ
       LZMAError.raise_if_necessary(res)
 
       res = ""
-      res.encode!("BINARY")
+      res.encode!(Encoding::BINARY)
       if block_given?
         res = lzma_code(io, stream, &block)
       else
@@ -165,7 +165,7 @@ module XZ
       LZMAError.raise_if_necessary(res)
 
       res = ""
-      res.encode!("BINARY")
+      res.encode!(Encoding::BINARY)
       if block_given?
         res = lzma_code(io, stream, &block)
       else
@@ -269,7 +269,7 @@ module XZ
       #Believe it or not, but this is faster than str.bytes.to_a.size.
       #I benchmarked it, and it is as twice as fast.
       if str.respond_to? :force_encoding
-        str.dup.force_encoding("BINARY").size
+        str.dup.force_encoding(Encoding::BINARY).size
       else
         str.bytes.to_a.size
       end
