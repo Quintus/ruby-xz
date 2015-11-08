@@ -46,8 +46,6 @@ DESCRIPTION
   spec.required_ruby_version = ">=1.9.3"
   spec.add_dependency("ffi")
   spec.add_dependency("io-like")
-  spec.add_development_dependency("emerald")
-  spec.add_development_dependency("turn")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
   spec.files << "COPYING"
