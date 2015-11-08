@@ -40,8 +40,6 @@ require "io/like"
 #ruby-xz can’t handle this as compiled strings don’t come with encoding
 #information.
 module XZ
-  #The version of this library.
-  VERSION = "0.2.1"
 
   #Number of bytes read in one chunk.
   CHUNK_SIZE = 4096
@@ -343,6 +341,7 @@ module XZ
 
 end
 
+require_relative "xz/version"
 require_relative "xz/lib_lzma"
 require_relative "xz/stream"
 require_relative "xz/stream_writer"
