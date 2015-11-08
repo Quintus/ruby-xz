@@ -25,13 +25,13 @@
 
 require_relative "./common"
 
-#For this testcase, please note that it isn’t possible to check
-#whether the compressed string is equal to some other
-#compressed string containing the same original text due to
-#different compression options and/or different versions of
-#liblzma. Hence, I can only test whether the re-decompressed
-#result is equal to what I originally had.
-class StreamWriterTest < Minitest::Unit::TestCase
+# For this testcase, please note that it isn’t possible to check
+# whether the compressed string is equal to some other
+# compressed string containing the same original text due to
+# different compression options and/or different versions of
+# liblzma. Hence, I can only test whether the re-decompressed
+# result is equal to what I originally had.
+class StreamWriterTest < Minitest::Test
 
   TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
   PLAIN_TEXT_FILE = TEST_DATA_DIR + "lorem_ipsum.txt"

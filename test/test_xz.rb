@@ -26,7 +26,7 @@
 
 require_relative "./common"
 
-class TestXZ < Minitest::Unit::TestCase
+class TestXZ < Minitest::Test
 
   TEST_XZ = "\3757zXZ\000\000\004\346\326\264F\002\000!\001\026\000\000\000t/" +
   "\345\243\340\000\023\000\020]\000\030\fB\222jg\274\016\32132a\326|\000\000" +

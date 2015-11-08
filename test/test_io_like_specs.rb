@@ -25,12 +25,12 @@
 
 require_relative "./common"
 
-#This test checks whether or not we conform to the
-#contracts enforced by the io-like gem.
+# This test checks whether or not we conform to the
+# contracts enforced by the io-like gem.
 #
-#Note that this test checks a private API (the one exposed
-#to the IO::Like library), hence the many calls to #send.
-class IOLikeSpecsTest < Minitest::Unit::TestCase
+# Note that this test checks a private API (the one exposed
+# to the IO::Like library), hence the many calls to #send.
+class IOLikeSpecsTest < Minitest::Test
 
   TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
   PLAIN_TEXT_FILE = TEST_DATA_DIR + "lorem_ipsum.txt"
