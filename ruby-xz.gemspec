@@ -41,8 +41,8 @@ DESCRIPTION
   spec.homepage              = "http://quintus.github.io/ruby-xz"
   spec.platform              = Gem::Platform::RUBY
   spec.required_ruby_version = ">=1.9.3"
-  spec.add_dependency("ffi")
-  spec.add_dependency("io-like")
+  spec.add_runtime_dependency("ffi", "~> 1.9")
+  spec.add_runtime_dependency("io-like", "~> 0.3")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
   spec.files << "COPYING"
