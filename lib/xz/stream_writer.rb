@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#--
 # (The MIT license)
 #
 # Basic liblzma-bindings for Ruby.
@@ -22,6 +23,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+#++
 
 # An IO-like writer class for XZ-compressed data, allowing you to
 # write uncompressed data to a stream which ends up as compressed data
