@@ -66,6 +66,8 @@ class TarballTest < Minitest::Test
         assert_equal File.read("test-data/lorem_ipsum.txt"), content
       end
     end
+  ensure
+    File.unlink(filename) if File.exist?(filename)
   end
 
 end
