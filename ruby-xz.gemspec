@@ -27,12 +27,13 @@ require_relative "lib/xz/version"
 
 GEMSPEC = Gem::Specification.new do |spec|
   spec.name        = "ruby-xz"
-  spec.summary     = "XZ compression via liblzma for Ruby."
+  spec.summary     = "XZ compression via liblzma for Ruby, using ffi."
   spec.description =<<DESCRIPTION
-This is a basic binding for liblzma that allows you to
-create and extract XZ-compressed archives. It can cope with big
-files as well as small ones, but doesn't offer much
-of the possibilities liblzma itself has.
+These are simple Ruby bindings for the liblzma library
+(http://tukaani.org/xz/), which is best known for the
+extreme compression ratio its native XZ format achieves.
+Since FFI is used to implement the bindings, no compilation
+is needed and they should work with JRuby as well.
 DESCRIPTION
   spec.version               = XZ::VERSION.gsub("-", ".")
   spec.author                = "Marvin Gülker"
