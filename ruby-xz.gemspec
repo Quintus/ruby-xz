@@ -45,8 +45,8 @@ DESCRIPTION
   spec.add_runtime_dependency("io-like", "~> 0.3")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
-  spec.files << "COPYING"
+  spec.files << "COPYING" << "AUTHORS"
   spec.has_rdoc         = true
-  spec.extra_rdoc_files = %w[README.md HISTORY.rdoc COPYING]
+  spec.extra_rdoc_files = %w[README.md HISTORY.rdoc COPYING AUTHORS]
   spec.rdoc_options << "-t" << "ruby-xz RDocs" << "-m" << "README.md"
 end
