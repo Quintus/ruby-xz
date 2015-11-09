@@ -28,3 +28,6 @@ require_relative "../lib/xz"
 require "pathname"
 require "tempfile"
 require "minitest/autorun"
+
+# These are annoying during tests
+XZ.disable_deprecation_notices = true
