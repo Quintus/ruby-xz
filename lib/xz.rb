@@ -107,8 +107,7 @@ module XZ
     # data, use the block form. Of course you shouldn't store the data
     # you read in RAM then as in the example above.
     def decompress_stream(io, memory_limit = LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check], &block)
-      raise(ArgumentError, "Invalid memory limit set!") unless (0..LibLZMA::UINT64_MAX).include?(memory_limit)
-
+      raise(ArgumentError, "Invalid memory limit set!") unless memory_limit > 0 && memory_limit <= LibLZMA::UINT64_MAX
 
       # bit-or all flags
       allflags = flags.inject(0) do |val, flag|
