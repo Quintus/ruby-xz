@@ -416,7 +416,7 @@ module XZ
     def check_lzma_code_retval(code)
       e = LibLZMA::LZMA_RET
       case code
-      when e[:lzma_no_check]          then warn("Couldn't verify archive integrity--archive has not integrity checksum.")
+      when e[:lzma_no_check]          then warn("Couldn't verify archive integrity--archive has no integrity checksum.")
       when e[:lzma_unsupported_check] then warn("Couldn't verify archive integrity--archive has an unsupported integrity checksum.")
       when e[:lzma_get_check]         then nil # This isn't useful for us. It indicates that the checksum type is now known.
       else
