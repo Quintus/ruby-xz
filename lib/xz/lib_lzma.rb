@@ -44,6 +44,14 @@ module XZ
     LZMA_TELL_ANY_CHECK         = 0x04
     LZMA_CONCATENATED           = 0x08
 
+    # For access convenience of the above flags.
+    LZMA_DECODE_FLAGS = {
+      :tell_no_check          => LZMA_TELL_NO_CHECK,
+      :tell_unsupported_check => LZMA_TELL_UNSUPPORTED_CHECK,
+      :tell_any_check         => LZMA_TELL_ANY_CHECK,
+      :concatenated           => LZMA_CONCATENATED
+    }.freeze
+
     # Placeholder enum used by liblzma for later additions.
     LZMA_RESERVED_ENUM = enum :lzma_reserved_enum, 0
 

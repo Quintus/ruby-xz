@@ -111,8 +111,8 @@ module XZ
 
       # bit-or all flags
       allflags = flags.inject(0) do |val, flag|
-        raise(ArgumentError, "Unknown flag #{flag}!") unless [:tell_no_check, :tell_unsupported_check, :tell_any_check, :concatenated].include?(flag)
-        val | LibLZMA.const_get(:"LZMA_#{flag.to_s.upcase}")
+        flag = LibLZMA::LZMA_DECODE_FLAGS[flag] || raise(ArgumentError, "Unknown flag #{flag}!")
+        val | flag
       end
 
       stream = LZMAStream.new
