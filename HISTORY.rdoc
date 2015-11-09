@@ -2,6 +2,15 @@
 
 == 0.2.2 (unreleased)
 
+* *Add* XZ.disable_deprecation_notes
+* *Deprecate* use of XZ::StreamReader.open with an IO argument
+* *Deprecate* use of XZ::StreamReader.new with a filename argument
+* *Deprecate* use of XZ::StreamWriter.open with an IO argument
+* *Deprecate* use of XZ::StreamWriter.new with a filename argument
+* *Deprecate* nonautomatic IO close in XZ::StreamReader#close
+* *Deprecate* nonautomatic IO close in XZ::StreamWriter#close
+* Goal of these deprecations is to sync the API with Ruby’s own
+  Zlib::GzipWriter and Zlib::GzipReader mostly.
 * Add required versions to gemspec.
 * Comment format cleanup, results in better docs.
 * Internal code cleanup
