@@ -5,6 +5,7 @@
 * Add required versions to gemspec.
 * Comment format cleanup, results in better docs.
 * Internal code cleanup
+* Add more tests.
 
 == 0.2.1 (2014-02-08)
 
