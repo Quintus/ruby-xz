@@ -199,7 +199,7 @@ module XZ
       raise(ArgumentError, "Invalid compression level!") unless (0..9).include?(compression_level)
       raise(ArgumentError, "Invalid checksum specified!") unless [:none, :crc32, :crc64, :sha256].include?(check)
 
-      compresion_level |= LibLZMA::LZMA_PRESET_EXTREME if extreme
+      compression_level |= LibLZMA::LZMA_PRESET_EXTREME if extreme
 
       stream = LZMAStream.new
       res = LibLZMA.lzma_easy_encoder(stream.pointer,
