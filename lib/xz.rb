@@ -108,16 +108,18 @@ module XZ
     # you read in RAM then as in the example above.
     def decompress_stream(io, memory_limit = LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check], &block)
       raise(ArgumentError, "Invalid memory limit set!") unless (0..LibLZMA::UINT64_MAX).include?(memory_limit)
-      flags.each do |flag|
+
+
+      # bit-or all flags
+      allflags = flags.inject(0) do |val, flag|
         raise(ArgumentError, "Unknown flag #{flag}!") unless [:tell_no_check, :tell_unsupported_check, :tell_any_check, :concatenated].include?(flag)
+        val | LibLZMA.const_get(:"LZMA_#{flag.to_s.upcase}")
       end
 
       stream = LZMAStream.new
-      res = LibLZMA.lzma_stream_decoder(
-        stream.pointer,
-        memory_limit,
-        flags.inject(0){|val, flag| val | LibLZMA.const_get(:"LZMA_#{flag.to_s.upcase}")}
-      )
+      res = LibLZMA.lzma_stream_decoder(stream.pointer,
+                                        memory_limit,
+                                        allflags)
 
       LZMAError.raise_if_necessary(res)
 
@@ -198,9 +200,11 @@ module XZ
       raise(ArgumentError, "Invalid compression level!") unless (0..9).include?(compression_level)
       raise(ArgumentError, "Invalid checksum specified!") unless [:none, :crc32, :crc64, :sha256].include?(check)
 
+      compresion_level |= LibLZMA::LZMA_PRESET_EXTREME if extreme
+
       stream = LZMAStream.new
       res = LibLZMA.lzma_easy_encoder(stream.pointer,
-                                      compression_level | (extreme ? LibLZMA::LZMA_PRESET_EXTREME : 0),
+                                      compression_level,
                                       LibLZMA::LZMA_CHECK[:"lzma_check_#{check}"])
 
       LZMAError.raise_if_necessary(res)

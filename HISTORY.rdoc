@@ -1,5 +1,11 @@
 = Version history
 
+== 0.2.2 (unreleased)
+
+* Add required versions to gemspec.
+* Comment format cleanup, results in better docs.
+* Internal code cleanup
+
 == 0.2.1 (2014-02-08)
 
 * Build the gem properly on Ruby 2.0+ (PR #8 by Nana Sakisaka (saki7))

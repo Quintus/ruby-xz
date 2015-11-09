@@ -73,5 +73,6 @@ class TestXZ < Minitest::Test
       end
     end
   end
+
 end
 
