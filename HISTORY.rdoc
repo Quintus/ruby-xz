@@ -9,7 +9,7 @@
 * *Deprecate* use of XZ::StreamWriter.new with a filename argument
 * *Deprecate* nonautomatic IO close in XZ::StreamReader#close
 * *Deprecate* nonautomatic IO close in XZ::StreamWriter#close
-* *Fix* incompatibility with Resolv.getaddr() in Ruby 2.2 (Ticket #13
+* *Fix* incompatibility with Resolv.getaddress() in Ruby 2.2 (Ticket #13
   by Ken Simon)
 * Goal of these deprecations is to sync the API with Ruby’s own
   Zlib::GzipWriter and Zlib::GzipReader mostly.
