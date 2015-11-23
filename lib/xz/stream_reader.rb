@@ -115,8 +115,8 @@ class XZ::StreamReader < XZ::Stream
   #     [:concatenated]
   #       Decompress concatenated archives.
   #
-  # The other parameters are identical to what the XZ::decompress_stream
-  # method expects.
+  # [reader]
+  #   Block argument. self of the new instance.
   #
   # === Return value
   #
@@ -201,14 +201,14 @@ class XZ::StreamReader < XZ::Stream
   public
 
   # call-seq:
-  #   open(delegate, opts = {}) → reader
-  #   open(delegate, opts = {}){|reader| …} → obj
+  #   open(filename, opts = {}) → reader
+  #   open(filename, opts = {}){|reader| …} → obj
   #
-  # Opens a file from disk at wraps an XZ::StreamReader instance
+  # Opens a file from disk and wraps an XZ::StreamReader instance
   # around the resulting File IO object. This is a convenience
   # method that is equivalent to calling
   #
-  #   file = File.open(delegate, "rb")
+  #   file = File.open(filename, "rb")
   #   reader = XZ::StreamReader.new(file, opts)
   #
   # , except that you don’t have to explicitely close the File
@@ -225,6 +225,9 @@ class XZ::StreamReader < XZ::Stream
   # [opts]
   #   Options hash. See ::new for a description of the possible
   #   options.
+  #
+  # [reader]
+  #   Block argument. self of the new instance.
   #
   # === Return value
   #
