@@ -47,9 +47,15 @@
 # otherwise data loss and unexpected exceptions may occur!).
 #
 # As it might be tedious to always remember the correct closing order,
-# it’s possible to pass a filename to the ::new method. In this case,
+# it’s possible to pass a filename to the ::open method. In this case,
 # StreamWriter will open the file internally and also takes care
 # closing it when you call the #close method.
+#
+# *WARNING*: The closing behaviour described above is subject to
+# change in the next major version. In the future, wrapped IO
+# objects are automatically closed always, regardless of whether you
+# passed a filename or an IO instance. This is to sync the API with
+# Ruby’s own Zlib::GzipWriter.
 #
 # See the +io-like+ gem’s documentation for the IO-writing methods
 # available for this class (although you’re probably familiar with
@@ -68,26 +74,54 @@
 class XZ::StreamWriter < XZ::Stream
 
   # call-seq:
-  #  open(delegate, compression_level = 6, check = :crc64, extreme = false) → a_stream_writer
-  #  new(delegate, compression_level = 6, check = :crc64, extreme = false)  → a_stream_writer
+  #  new(delegate, compression_level = 6, opts = {}) → writer
+  #  new(delegate, compression_level = 6, opts = {}){|writer| …} → obj
   #
   # Creates a new StreamWriter instance. The block form automatically
   # calls the #close method when the block has finished executing.
   #
   # === Parameters
   # [delegate]
-  #   An IO object to write the data to or a filename
-  #   which will be opened internally. If you pass an IO,
-  #   the #close method won’t close the passed IO object;
-  #   if you passed a filename, the created internal file
-  #   of course gets closed.
+  #   An IO object to write the data to
   #
-  # The other parameters are identical to what the XZ::compress_stream
-  # method expects.
+  # [compression_level (6)]
+  #   Compression strength. Higher values indicate a smaller result,
+  #   but longer compression time. Maximum is 9.
+  #
+  # [opts]
+  #   Options hash. Possible values are (defaults indicated in
+  #   parantheses):
+  #
+  #   [:check (:crc64)]
+  #     The checksum algorithm to use for verifying
+  #     the data inside the archive. Possible values are:
+  #     * :none
+  #     * :crc32
+  #     * :crc64
+  #     * :sha256
+  #
+  #   [:extreme (false)]
+  #     Tries to get the last bit out of the compression.
+  #     This may succeed, but you can end up with *very*
+  #     long computation times.
+  #
+  # [writer]
+  #   Block argument. self of the new instance.
   #
   # === Return value
   #
-  # The newly created instance.
+  # The block form returns the block’s last expression, the nonblock
+  # form returns the newly created instance.
+  #
+  # === Deprecations
+  #
+  # The old API for this method as it was documented in version 0.2.1
+  # still works, but is deprecated. Please change to the new API as
+  # soon as possible.
+  #
+  # *WARNING*: The closing behaviour of the block form is subject to
+  # upcoming change. In the next major release the wrapped IO *will*
+  # be automatically closed!
   #
   # === Example
   #
@@ -98,27 +132,45 @@ class XZ::StreamWriter < XZ::Stream
   #   # Use SHA256 as the checksum and use a higher compression level
   #   # than the default (6)
   #   f = File.open("data.xz")
-  #   w = XZ::StreamWriter.new(f, 8, :sha256)
+  #   w = XZ::StreamWriter.new(f, 8, :check => :sha256)
   #
   #   # Instruct liblzma to use ultra-really-high compression
   #   # (may take eternity)
   #   f = File.open("data.xz")
-  #   w = XZ::StreamWriter.new(f, 9, :crc64, true)
-  #
-  #   # Passing a filename
-  #   w = XZ::StreamWriter.new("compressed_data.xz")
-  def initialize(delegate, compression_level = 6, check = :crc64, extreme = false)
+  #   w = XZ::StreamWriter.new(f, 9, :extreme => true)
+  def initialize(delegate, compression_level = 6, *args, &block)
     if delegate.respond_to?(:to_io)
-      super(delegate)
+      # Correct use with IO
+      super(delegate.to_io)
     else
-      @file = File.open(delegate, "wb")
-      super(@file)
+      # Deprecated use of filename
+      XZ.deprecate "Calling XZ::StreamWriter.new with a filename is deprecated, use XZ::StreamWriter.open instead"
+
+      @autoclose = true
+      super(File.open(delegate, "wb"))
     end
+
+    opts = {}
+    if args[0].kind_of?(Hash) # New API
+      opts = args[0]
+      opts[:check] ||= :crc64
+      opts[:extreme] ||= false
+    else # Old API
+      # no arguments may also happen in new API
+      unless args.empty?
+        XZ.deprecate "Calling XZ::StreamWriter withm ore than 2 explicit arguments is deprecated, use options hash instead."
+      end
+
+      opts[:check] = args[0] || :crc64
+      opts[:extreme] = args[1] || false
+    end
+
+    # TODO: Check argument validity...
 
     # Initialize the internal LZMA stream for encoding
     res = XZ::LibLZMA.lzma_easy_encoder(@lzma_stream.pointer,
-                                  compression_level | (extreme ? XZ::LibLZMA::LZMA_PRESET_EXTREME : 0),
-                                  XZ::LibLZMA::LZMA_CHECK[:"lzma_check_#{check}"])
+                                  compression_level | (opts[:extreme] ? XZ::LibLZMA::LZMA_PRESET_EXTREME : 0),
+                                  XZ::LibLZMA::LZMA_CHECK[:"lzma_check_#{opts[:check]}"])
     XZ::LZMAError.raise_if_necessary(res)
 
     if block_given?
@@ -129,7 +181,75 @@ class XZ::StreamWriter < XZ::Stream
       end
     end
   end
-  self.class.send(:alias_method, :open, :new)
+
+  # call-seq:
+  #   open(filename, compression_level = 6, opts = {}) → writer
+  #   open(filename, compression_level = 6, opts = {}){|writer| …} → obj
+  #
+  # Opens a file from disk and wraps an XZ::StreamWriter instance
+  # around the resulting file IO object. This is a convenience method
+  # mostly equivalent to
+  #
+  #   file = File.open(filename, "wb")
+  #   writer = XZ::StreamWriter.new(file, compression_level, opts)
+  #
+  # , except that you don’t have to explicitely close the File
+  # instance, this is done automatically for you when you call #close.
+  # Beware the Deprecations section in this regard.
+  #
+  # === Parameters
+  #
+  # [filename]
+  #   Path to a file on the disk to open. This file should exist and be
+  #   writable, otherwise you may get Errno exceptions.
+  #
+  # [opts]
+  #   Options hash. See ::new for a description of the possible
+  #   options.
+  #
+  # [writer]
+  #   Block argument. self of the new instance.
+  #
+  # === Return value
+  #
+  # The block form returns the blocks last expression, the nonblock
+  # form returns the newly created XZ::StreamWriter instance.
+  #
+  # === Deprecations
+  #
+  # In the API up to and including version 0.2.1 this method was an
+  # alias for ::new. This continues to work for now, but using it
+  # as an alias for ::new is deprecated. The next major version will
+  # only accept a string as a parameter for this method.
+  #
+  # *WARNING*: Future versions of ruby-xz will always close the
+  # wrapped IO, regardless of whether you pass in your own IO or use
+  # this convenience method!
+  #
+  # === Example
+  #
+  #   w = XZ::StreamWriter.new("compressed_data.xz")
+  def self.open(filename, compression_level = 6, *args, &block)
+    if filename.respond_to?(:to_io)
+      # Deprecated use of IO
+      XZ.deprecate "Calling XZ::StreamWriter.open with an IO is deprecated, use XZ::StreamReader.new instead."
+      new(filename.to_io, compression_level, *args, &block)
+    else
+      # Correct use with filename
+      file = File.open(filename, "wb")
+
+      obj = new(file, compression_level, *args)
+      obj.instance_variable_set(:@autoclose, true) # Only needed during deprecation phase, see #close
+
+      if block_given?
+        begin
+          block.call(obj)
+        ensure
+          obj.close unless obj.closed?
+        end
+      end
+    end
+  end
 
   # Closes this StreamWriter instance and flushes all internal buffers.
   # Don’t use it afterwards anymore.
@@ -176,8 +296,16 @@ class XZ::StreamWriter < XZ::Stream
     res = XZ::LibLZMA.lzma_end(@lzma_stream.pointer)
     XZ::LZMAError.raise_if_necessary(res)
 
+    # New API: Close the wrapped IO
+    #@delegate_io.close
+
+    # Old API:
     # 2b. If we wrapped a file automatically, close it.
-    @file.close if @file
+    if @autoclose
+      @delegate_io.close
+    else
+      XZ.deprecate "XZ::StreamWriter#close will automatically close the wrapped IO in the future"
+    end
 
     # 3. Return the number of bytes written in total.
     @lzma_stream[:total_out]
