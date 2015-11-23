@@ -35,9 +35,9 @@
 # the compressed data from; you can either pass this IO object directly
 # to the ::new method, effectively allowing you to pass any IO-like thing
 # you can imagine (just ensure it is readable), or you can pass a path
-# to a filename to ::new, in which case StreamReader takes care of both
+# to a filename to ::open, in which case StreamReader takes care of both
 # opening and closing the file correctly. You can even take it one step
-# further and use the block form of ::new which will automatically call
+# further and use the block form of ::new and ::open, which will automatically call
 # the #close method for you after the block finished. However, if you pass
 # an IO, remember you have to close:
 #
@@ -45,6 +45,12 @@
 # 2. The IO object you passed to ::new.
 #
 # Do it <b>in exactly that order</b>, otherwise you may lose data.
+#
+# *WARNING*: The closing behaviour described above is subject to
+# change in the next major version. In the future, wrapped IO
+# objects are automatically closed always, regardless of whether you
+# passed a filename or an IO instance. This is to sync the API with
+# Ruby’s own Zlib::GzipReader.
 #
 # See the +io-like+ gem’s documentation for the IO-reading methods
 # available for this class (although you’re probably familiar with
@@ -71,30 +77,61 @@ class XZ::StreamReader < XZ::Stream
   attr_reader :flags
 
   # call-seq:
-  #   new(delegate, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check])  → a_stream_reader
-  #   open(delegate, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check]) → a_stream_reader
+  #   new(delegate, opts = {}) → reader
+  #   new(delegate, opts = {}){|reader| …} → obj
   #
   # Creates a new StreamReader instance. If you pass an IO,
   # remember you have to close *both* the resulting instance
   # (via the #close method) and the IO object you pass to flush
   # any internal buffers in order to be able to read all decompressed
-  # data.
+  # data (beware Deprecations section below).
   #
   # === Parameters
   #
   # [delegate]
-  #   An IO object to read the data from, or a path
-  #   to a file to open. If you’re in an urgent need to
-  #   pass a plain string, use StringIO from Ruby’s
+  #   An IO object to read the data from, If you’re in an urgent
+  #   need to pass a plain string, use StringIO from Ruby’s
   #   standard library. If this is an IO, it must be
   #   opened for reading.
+  #
+  # [opts]
+  #   Options hash accepting these parameters (defaults indicated
+  #   in parantheses):
+  #
+  #   [:memory_limit (LibLZMA::UINT64_MAX)]
+  #     If not XZ::LibLZMA::UINT64_MAX, makes liblzma use
+  #     no more memory than this amount of bytes.
+  #
+  #   [:flags ([:tell_unsupported_check])]
+  #     Additional flags passed to libzlma (an array). Possible
+  #     flags are:
+  #
+  #     [:tell_no_check]
+  #       Spit out a warning if the archive hasn’t an integrity
+  #       checksum.
+  #     [:tell_unsupported_check]
+  #       Spit out a warning if the archive has an unsupported
+  #       checksum type.
+  #     [:concatenated]
+  #       Decompress concatenated archives.
   #
   # The other parameters are identical to what the XZ::decompress_stream
   # method expects.
   #
   # === Return value
   #
-  # The newly created instance.
+  # The block form returns the block’s last expression, the nonblock
+  # form returns the newly created instance.
+  #
+  # === Deprecations
+  #
+  # The old API for this method as it was documented in version 0.2.1
+  # still works, but is deprecated. Please change to the new API as
+  # soon as possible.
+  #
+  # *WARNING*: The closing behaviour of the block form is subject to
+  # upcoming change. In the next major release the wrapped IO *will*
+  # be automatically closed!
   #
   # === Example
   #
@@ -105,27 +142,42 @@ class XZ::StreamReader < XZ::Stream
   #   # Ignore any XZ checksums (may result in invalid
   #   # data being read!)
   #   File.open("foo.xz") do |f|
-  #     r = XZ::StreamReader.new(f, XZ::LibLZMA::UINT64_MAX, [:tell_no_check]
+  #     r = XZ::StreamReader.new(f, :flags => [:tell_no_check])
   #   end
-  #
-  #   # Let StreamReader handle file closing
-  #   # automatically
-  #   XZ::StreamReader.new("myfile.xz"){|r| r.raed}
-  def initialize(delegate, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check])
-    raise(ArgumentError, "Invalid memory limit set!") unless (0..XZ::LibLZMA::UINT64_MAX).include?(memory_limit)
-    flags.each do |flag|
+  def initialize(delegate, *args, &block)
+    if delegate.respond_to?(:to_io)
+      # Correct use with IO
+      super(delegate.to_io)
+    else
+      # Deprecated use of filename
+      XZ.deprecate "Calling XZ::StreamReader.new with a filename is deprecated, use XZ::StreamReader.open instead."
+
+      @autoclose = true
+      super(File.open(delegate, "rb"))
+    end
+
+    opts = {}
+    if args[0].kind_of?(Hash) # New API
+      opts = args[0]
+      opts[:memory_limit] ||= XZ::LibLZMA::UINT64_MAX
+      opts[:flags] ||= [:tell_unsupported_check]
+    else # Old API
+      # no arguments may also happen in new API
+      unless args.empty?
+        XZ.deprecate "Calling XZ::StreamReader.new with explicit arguments is deprecated, use an options hash instead."
+      end
+
+      opts[:memory_limit] = args[0] || XZ::LibLZMA::UINT64_MAX
+      opts[:flags] = args[1] || [:tell_unsupported_check]
+    end
+
+    raise(ArgumentError, "Invalid memory limit set!") unless (0..XZ::LibLZMA::UINT64_MAX).include?(opts[:memory_limit])
+    opts[:flags].each do |flag|
       raise(ArgumentError, "Unknown flag #{flag}!") unless [:tell_no_check, :tell_unsupported_check, :tell_any_check, :concatenated].include?(flag)
     end
 
-    if delegate.respond_to?(:to_io)
-      super(delegate)
-    else
-      @file = File.open(delegate, "rb")
-      super(@file)
-    end
-
-    @memory_limit = memory_limit
-    @flags        = flags
+    @memory_limit = opts[:memory_limit]
+    @flags        = opts[:flags]
 
     res = XZ::LibLZMA.lzma_stream_decoder(@lzma_stream,
                                           @memory_limit,
@@ -146,7 +198,74 @@ class XZ::StreamReader < XZ::Stream
       end
     end
   end
-  self.class.send(:alias_method, :open, :new)
+  public
+
+  # call-seq:
+  #   open(delegate, opts = {}) → reader
+  #   open(delegate, opts = {}){|reader| …} → obj
+  #
+  # Opens a file from disk at wraps an XZ::StreamReader instance
+  # around the resulting File IO object. This is a convenience
+  # method that is equivalent to calling
+  #
+  #   file = File.open(delegate, "rb")
+  #   reader = XZ::StreamReader.new(file, opts)
+  #
+  # , except that you don’t have to explicitely close the File
+  # instance, this is done automatically when you call #close.
+  # Beware the Deprecations section in this regard.
+  #
+  # === Parameters
+  #
+  # [filename]
+  #   Path to a file on the disk to open. This file should
+  #   exist and be readable, otherwise you may get Errno
+  #   exceptions.
+  #
+  # [opts]
+  #   Options hash. See ::new for a description of the possible
+  #   options.
+  #
+  # === Return value
+  #
+  # The block form returns the block’s last expression, the nonblock
+  # form returns the newly created XZ::StreamReader instance.
+  #
+  # === Deprecations
+  #
+  # In the API up to and including version 0.2.1 this method was an
+  # alias for ::new. This continues to work for now, but using it
+  # as an alias for ::new is deprecated. The next major version will
+  # only accept a string as a parameter for this method.
+  #
+  # *WARNING*: Future versions of ruby-xz will always close the
+  # wrapped IO, regardless of whether you pass in your own IO or use
+  # this convenience method!
+  #
+  # === Examples
+  #
+  #   XZ::StreamReader.new("myfile.xz"){|r| r.read}
+  def self.open(filename, *args, &block)
+    if filename.respond_to?(:to_io)
+      # Deprecated use of IO
+      XZ.deprecate "Calling XZ::StreamReader.open with an IO is deprecated, use XZ::StreamReader.new instead"
+      new(filename.to_io, *args, &block)
+    else
+      # Correct use with filename
+      file = File.open(filename, "rb")
+
+      obj = new(file, *args)
+      obj.instance_variable_set(:@autoclose, true) # Only needed during deprecation phase (see #close)
+
+      if block_given?
+        begin
+          block.call(obj)
+        ensure
+          obj.close unless obj.closed?
+        end
+      end
+    end
+  end
 
   # Closes this StreamReader instance. Don’t use it afterwards
   # anymore.
@@ -163,6 +282,9 @@ class XZ::StreamReader < XZ::Stream
   #
   # If you passed an IO to ::new, this method doesn’t close it, so
   # you have to close it yourself.
+  #
+  # *WARNING*: The next major release will change this behaviour.
+  # In the future, the wrapped IO object will always be closed.
   def close
     super
 
@@ -170,8 +292,21 @@ class XZ::StreamReader < XZ::Stream
     res = XZ::LibLZMA.lzma_end(@lzma_stream.pointer)
     XZ::LZMAError.raise_if_necessary(res)
 
+    # New API: Close the wrapped IO
+    #@delegate_io.close
+    # ↑ uncomment on API break and remove OLD API below. Note that with
+    # the new API that always closes the underlying IO, it is not necessary
+    # to distinguish a self-opened IO from a wrapped preexisting IO.
+    # The variable @autoclose can thus be removed on API break.
+
+    # Old API:
     #If we created a File object, close this as well.
-    @file.close if @file
+    if @autoclose
+      # This does not change in the new API, so no deprecation warning.
+      @delegate_io.close
+    else
+      XZ.deprecate "XZ::StreamReader#close will automatically close the wrapped IO in the future"
+    end
 
     # Return the number of bytes written in total.
     @lzma_stream[:total_out]
@@ -230,10 +365,10 @@ class XZ::StreamReader < XZ::Stream
       raise(IOError, "Delegate IO failed to rewind! Original message: #{e.message}")
     end
 
-    # Reinitialize everything. Note this doesn’t affect @file as it
+    # Reinitialize everything. Note this doesn’t affect @autofile as it
     # is already set and stays so (we don’t pass a filename here,
     # but rather an IO)
-    initialize(@delegate_io, @memory_limit, @flags)
+    initialize(@delegate_io, :memory_limit => @memory_limit, :flags => @flags)
   end
 
   # NO, you CANNOT seek in this object!!
