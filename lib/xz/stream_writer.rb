@@ -107,14 +107,11 @@ class XZ::StreamWriter < XZ::Stream
   #
   #   # Passing a filename
   #   w = XZ::StreamWriter.new("compressed_data.xz")
-  def initialize(delegate, compression_level = 6, check = :crc64, extreme = false, __nodeprecate = false)
+  def initialize(delegate, compression_level = 6, check = :crc64, extreme = false)
     if delegate.respond_to?(:to_io)
       super(delegate)
     else
-      # TODO: Remove this branch when the deprecation is executed
-      unless __nodeprecate
-        XZ.deprecate("Calling XZ::StreamWriter.new with a filename is deprecated. Use XZ::StreamWriter.open instead.")
-      end
+      XZ.deprecate("Calling XZ::StreamWriter.new with a filename is deprecated. Use XZ::StreamWriter.open instead.")
 
       @file = File.open(delegate, "wb")
       super(@file)
@@ -137,14 +134,12 @@ class XZ::StreamWriter < XZ::Stream
 
   # Opens the given +filename+ and wraps a StreamWriter object around
   # that.
-  def self.open(filename, compression_level = 6, check = :crc64, extreme = false, &block)
+  def self.open(filename, *args, &block)
     if filename.respond_to?(:to_io)
       XZ.deprecate("Calling XZ::StreamWriter.open with an IO object is deprecated. Use XZ::StreamWriter.new instead.")
-      new(filename, compression_level, check, extreme, &block)
-    else
-      # TODO: Incorporate current code in new() when the deprecation above is executed
-      new(filename, compression_level, check, extreme, true, &block)
     end
+
+    new(filename, *args, &block)
   end
 
   # Closes this StreamWriter instance and flushes all internal buffers.

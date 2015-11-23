@@ -111,7 +111,7 @@ class XZ::StreamReader < XZ::Stream
   #   # Let StreamReader handle file closing
   #   # automatically
   #   XZ::StreamReader.new("myfile.xz"){|r| r.raed}
-  def initialize(delegate, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check], __nodeprecate = false)
+  def initialize(delegate, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check])
     raise(ArgumentError, "Invalid memory limit set!") unless (0..XZ::LibLZMA::UINT64_MAX).include?(memory_limit)
     flags.each do |flag|
       raise(ArgumentError, "Unknown flag #{flag}!") unless [:tell_no_check, :tell_unsupported_check, :tell_any_check, :concatenated].include?(flag)
@@ -120,10 +120,7 @@ class XZ::StreamReader < XZ::Stream
     if delegate.respond_to?(:to_io)
       super(delegate)
     else
-      # TODO: Remove this branch when the deprecation is executed
-      unless __nodeprecate
-        XZ.deprecate("Calling XZ::StreamReader.new with a filename is deprecated. Use XZ::StreamWriter.open instead.")
-      end
+      XZ.deprecate("Calling XZ::StreamReader.new with a filename is deprecated. Use XZ::StreamWriter.open instead.")
 
       @file = File.open(delegate, "rb")
       super(@file)
@@ -154,14 +151,12 @@ class XZ::StreamReader < XZ::Stream
 
   # Opens the given +filename+ and wraps a StreamReader object around
   # that.
-  def self.open(filename, memory_limit = XZ::LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check], &block)
+  def self.open(filename, *args, &block)
     if filename.respond_to?(:to_io)
       XZ.deprecate("Calling XZ::StreamReader.open with an IO object is deprecated. Use XZ::StreamWriter.new instead.")
-      new(filename, memory_limit, flags, &block)
-    else
-      # TODO: Incorporate current code in new() when the deprecation above is executed.
-      new(filename, memory_limit, flags, true, &block)
     end
+
+    new(filename, *args, &block)
   end
 
 
