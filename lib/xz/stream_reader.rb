@@ -144,7 +144,7 @@ class XZ::StreamReader < XZ::Stream
   #   File.open("foo.xz") do |f|
   #     r = XZ::StreamReader.new(f, :flags => [:tell_no_check])
   #   end
-  def initialize(delegate, *args, &block)
+  def initialize(delegate, *args)
     if delegate.respond_to?(:to_io)
       # Correct use with IO
       super(delegate.to_io)
