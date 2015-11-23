@@ -120,8 +120,6 @@ class XZ::StreamReader < XZ::Stream
     if delegate.respond_to?(:to_io)
       super(delegate)
     else
-      XZ.deprecate("Calling XZ::StreamReader.new with a filename is deprecated. Use XZ::StreamWriter.open instead.")
-
       @file = File.open(delegate, "rb")
       super(@file)
     end
@@ -148,17 +146,7 @@ class XZ::StreamReader < XZ::Stream
       end
     end
   end
-
-  # Opens the given +filename+ and wraps a StreamReader object around
-  # that.
-  def self.open(filename, *args, &block)
-    if filename.respond_to?(:to_io)
-      XZ.deprecate("Calling XZ::StreamReader.open with an IO object is deprecated. Use XZ::StreamWriter.new instead.")
-    end
-
-    new(filename, *args, &block)
-  end
-
+  self.class.send(:alias_method, :open, :new)
 
   # Closes this StreamReader instance. Don’t use it afterwards
   # anymore.
@@ -177,11 +165,6 @@ class XZ::StreamReader < XZ::Stream
   # you have to close it yourself.
   def close
     super
-
-    # Warn that we introduce autoclose like Zlib::GzipFile#close.
-    unless @file
-      XZ.deprecate("XZ::StreamReader#close will automatically close the underlying IO in the future.")
-    end
 
     # Close the XZ stream
     res = XZ::LibLZMA.lzma_end(@lzma_stream.pointer)

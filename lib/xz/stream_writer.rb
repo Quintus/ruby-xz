@@ -111,8 +111,6 @@ class XZ::StreamWriter < XZ::Stream
     if delegate.respond_to?(:to_io)
       super(delegate)
     else
-      XZ.deprecate("Calling XZ::StreamWriter.new with a filename is deprecated. Use XZ::StreamWriter.open instead.")
-
       @file = File.open(delegate, "wb")
       super(@file)
     end
@@ -131,16 +129,7 @@ class XZ::StreamWriter < XZ::Stream
       end
     end
   end
-
-  # Opens the given +filename+ and wraps a StreamWriter object around
-  # that.
-  def self.open(filename, *args, &block)
-    if filename.respond_to?(:to_io)
-      XZ.deprecate("Calling XZ::StreamWriter.open with an IO object is deprecated. Use XZ::StreamWriter.new instead.")
-    end
-
-    new(filename, *args, &block)
-  end
+  self.class.send(:alias_method, :open, :new)
 
   # Closes this StreamWriter instance and flushes all internal buffers.
   # Don’t use it afterwards anymore.
@@ -160,11 +149,6 @@ class XZ::StreamWriter < XZ::Stream
   # you have to do that yourself.
   def close
     super
-
-    # 0. Warn that we introduce autoclose like Zlib::GzipFile#close.
-    unless @file
-      XZ.deprecate("XZ::StreamWriter#close will automatically close the underlying IO in the future.")
-    end
 
     #1. Close the current block ("file") (an XZ stream may actually include
     #   multiple compressed files, which however is not supported by
