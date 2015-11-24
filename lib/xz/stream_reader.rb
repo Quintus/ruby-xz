@@ -343,7 +343,11 @@ class XZ::StreamReader < XZ::Stream
   #   # f is still open here!
   #
   #   # Block form
-  #   f = XZ::StreamReader.open("foo.xz"){|r| r.read; r.finish}
+  #   str = nil
+  #   f = XZ::StreamReader.open("foo.xz") do |r|
+  #     str = r.read
+  #     r.finish
+  #   end
   #   # f now is an *open* File instance of mode "rb".
   def finish
     # Do not close wrapped IO object in #close
