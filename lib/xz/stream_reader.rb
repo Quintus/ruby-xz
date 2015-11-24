@@ -198,7 +198,6 @@ class XZ::StreamReader < XZ::Stream
       end
     end
   end
-  public
 
   # call-seq:
   #   open(filename, opts = {}) → reader
