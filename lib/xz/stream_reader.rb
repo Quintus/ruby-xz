@@ -148,6 +148,7 @@ class XZ::StreamReader < XZ::Stream
     if delegate.respond_to?(:to_io)
       # Correct use with IO
       super(delegate.to_io)
+      @autoclose = false
     else
       # Deprecated use of filename
       XZ.deprecate "Calling XZ::StreamReader.new with a filename is deprecated, use XZ::StreamReader.open instead."

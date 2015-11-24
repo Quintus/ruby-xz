@@ -142,6 +142,7 @@ class XZ::StreamWriter < XZ::Stream
     if delegate.respond_to?(:to_io)
       # Correct use with IO
       super(delegate.to_io)
+      @autoclose = false
     else
       # Deprecated use of filename
       XZ.deprecate "Calling XZ::StreamWriter.new with a filename is deprecated, use XZ::StreamWriter.open instead"
