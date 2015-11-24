@@ -50,7 +50,8 @@
 # change in the next major version. In the future, wrapped IO
 # objects are automatically closed always, regardless of whether you
 # passed a filename or an IO instance. This is to sync the API with
-# Ruby’s own Zlib::GzipReader.
+# Ruby’s own Zlib::GzipReader. To prevent that, call #finish instead
+# of #close.
 #
 # See the +io-like+ gem’s documentation for the IO-reading methods
 # available for this class (although you’re probably familiar with
@@ -131,7 +132,7 @@ class XZ::StreamReader < XZ::Stream
   #
   # *WARNING*: The closing behaviour of the block form is subject to
   # upcoming change. In the next major release the wrapped IO *will*
-  # be automatically closed!
+  # be automatically closed, unless you call #finish.
   #
   # === Example
   #
@@ -156,6 +157,9 @@ class XZ::StreamReader < XZ::Stream
       @autoclose = true
       super(File.open(delegate, "rb"))
     end
+
+    # Flag for calling #finish
+    @finish = false
 
     opts = {}
     if args[0].kind_of?(Hash) # New API
@@ -243,7 +247,7 @@ class XZ::StreamReader < XZ::Stream
   #
   # *WARNING*: Future versions of ruby-xz will always close the
   # wrapped IO, regardless of whether you pass in your own IO or use
-  # this convenience method!
+  # this convenience method! To prevent that, call the #finish method.
   #
   # === Examples
   #
@@ -288,6 +292,7 @@ class XZ::StreamReader < XZ::Stream
   #
   # *WARNING*: The next major release will change this behaviour.
   # In the future, the wrapped IO object will always be closed.
+  # Use the #finish method for keeping it open.
   def close
     super
 
@@ -295,24 +300,57 @@ class XZ::StreamReader < XZ::Stream
     res = XZ::LibLZMA.lzma_end(@lzma_stream.pointer)
     XZ::LZMAError.raise_if_necessary(res)
 
-    # New API: Close the wrapped IO
-    #@delegate_io.close
-    # ↑ uncomment on API break and remove OLD API below. Note that with
-    # the new API that always closes the underlying IO, it is not necessary
-    # to distinguish a self-opened IO from a wrapped preexisting IO.
-    # The variable @autoclose can thus be removed on API break.
+    unless @finish
+      # New API: Close the wrapped IO
+      #@delegate_io.close
+      # ↑ uncomment on API break and remove OLD API below. Note that with
+      # the new API that always closes the underlying IO, it is not necessary
+      # to distinguish a self-opened IO from a wrapped preexisting IO.
+      # The variable @autoclose can thus be removed on API break.
 
-    # Old API:
-    #If we created a File object, close this as well.
-    if @autoclose
-      # This does not change in the new API, so no deprecation warning.
-      @delegate_io.close
-    else
-      XZ.deprecate "XZ::StreamReader#close will automatically close the wrapped IO in the future"
+      # Old API:
+      #If we created a File object, close this as well.
+      if @autoclose
+        # This does not change in the new API, so no deprecation warning.
+        @delegate_io.close
+      else
+        XZ.deprecate "XZ::StreamReader#close will automatically close the wrapped IO in the future. Use #finish to prevent that."
+      end
     end
 
     # Return the number of bytes written in total.
     @lzma_stream[:total_out]
+  end
+
+  # If called in the block form of ::new or ::open, prevents the
+  # wrapped IO from being closed, only the LZMA stream is closed
+  # then. If called outside the block form of ::new and open, behaves
+  # like #close, but only closes the underlying LZMA stream. The
+  # wrapped IO object is kept open.
+  #
+  # === Return value
+  #
+  # Returns the wrapped IO object. This allows you to wire the File
+  # instance out of a StreamReader instance that was created with
+  # ::open.
+  #
+  # === Example
+  #
+  #   # Nonblock form
+  #   f = File.open("foo.xz", "rb")
+  #   r = XZ::StreamReader.new(f)
+  #   r.finish
+  #   # f is still open here!
+  #
+  #   # Block form
+  #   f = XZ::StreamReader.open("foo.xz"){|r| r.read; r.finish}
+  #   # f now is an *open* File instance of mode "rb".
+  def finish
+    # Do not close wrapped IO object in #close
+    @finish = true
+    close
+
+    @delegate_io
   end
 
   # call-seq:

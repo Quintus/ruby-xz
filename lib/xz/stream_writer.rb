@@ -55,7 +55,8 @@
 # change in the next major version. In the future, wrapped IO
 # objects are automatically closed always, regardless of whether you
 # passed a filename or an IO instance. This is to sync the API with
-# Ruby’s own Zlib::GzipWriter.
+# Ruby’s own Zlib::GzipWriter. To retain the old behaviour, call
+# the #finish method (which is also in sync with the Zlib API).
 #
 # See the +io-like+ gem’s documentation for the IO-writing methods
 # available for this class (although you’re probably familiar with
@@ -121,7 +122,7 @@ class XZ::StreamWriter < XZ::Stream
   #
   # *WARNING*: The closing behaviour of the block form is subject to
   # upcoming change. In the next major release the wrapped IO *will*
-  # be automatically closed!
+  # be automatically closed, unless you call #finish to prevent that.
   #
   # === Example
   #
@@ -150,6 +151,9 @@ class XZ::StreamWriter < XZ::Stream
       @autoclose = true
       super(File.open(delegate, "wb"))
     end
+
+    # Flag for #finish method
+    @finish = false
 
     opts = {}
     if args[0].kind_of?(Hash) # New API
@@ -225,7 +229,7 @@ class XZ::StreamWriter < XZ::Stream
   #
   # *WARNING*: Future versions of ruby-xz will always close the
   # wrapped IO, regardless of whether you pass in your own IO or use
-  # this convenience method!
+  # this convenience method, unless you call #finish to prevent that.
   #
   # === Example
   #
@@ -268,6 +272,10 @@ class XZ::StreamWriter < XZ::Stream
   #
   # If you passed an IO object to ::new, this method doesn’t close it,
   # you have to do that yourself.
+  #
+  # *WARNING*: The next major release will change this behaviour.
+  # In the future, the wrapped IO object will always be closed.
+  # Use the #finish method for keeping it open.
   def close
     super
 
@@ -297,19 +305,56 @@ class XZ::StreamWriter < XZ::Stream
     res = XZ::LibLZMA.lzma_end(@lzma_stream.pointer)
     XZ::LZMAError.raise_if_necessary(res)
 
-    # New API: Close the wrapped IO
-    #@delegate_io.close
+    unless @finish
+      # New API: Close the wrapped IO
+      #@delegate_io.close
 
-    # Old API:
-    # 2b. If we wrapped a file automatically, close it.
-    if @autoclose
-      @delegate_io.close
-    else
-      XZ.deprecate "XZ::StreamWriter#close will automatically close the wrapped IO in the future"
+      # Old API:
+      # 2b. If we wrapped a file automatically, close it.
+      if @autoclose
+        @delegate_io.close
+      else
+        XZ.deprecate "XZ::StreamWriter#close will automatically close the wrapped IO in the future. Use #finish to prevent that."
+      end
     end
 
     # 3. Return the number of bytes written in total.
     @lzma_stream[:total_out]
+  end
+
+  # If called in the block form of ::new or ::open, prevents the
+  # wrapped IO from being closed, only the LZMA stream is closed
+  # then. If called outside the block form of ::new and open, behaves
+  # like #close, but only closes the underlying LZMA stream. The
+  # wrapped IO object is kept open.
+  #
+  # === Return value
+  #
+  # Returns the wrapped IO object. This allows you to wire the File
+  # instance out of a StreamReader instance that was created with
+  # ::open.
+  #
+  # === Example
+  #
+  #   # Nonblock form
+  #   f = File.open("foo.xz", "wb")
+  #   w = XZ::StreamReader.new(f)
+  #   # ...
+  #   w.finish
+  #   # f is still open here!
+  #
+  #   # Block form
+  #   f = XZ::StreamReader.open("foo.xz") do |w|
+  #     # ...
+  #     w.finish
+  #   end
+  #   # f now is an *open* File instance of mode "wb".
+  def finish
+    # Do not close wrapped IO object in #close
+    @finish = true
+    close
+
+    @delegate_io
   end
 
   # call-seq:
