@@ -84,6 +84,37 @@ class StreamWriterTest < Minitest::Test
     end
   end
 
+  def test_finish
+    File.open(LIVE_TEST_FILE, "wb") do |file|
+      XZ::StreamWriter.new(file) do |w|
+        w.write("Foo")
+        assert_equal file, w.finish
+      end
+
+      assert !file.closed?, "Closed wrapped file despite of #finish!"
+    end
+
+    File.open(LIVE_TEST_FILE, "wb") do |file|
+      w = XZ::StreamWriter.new(file)
+      w.write("Foo")
+
+      assert_equal file, w.finish
+      assert !file.closed?, "Closed wrapped file despite of #finish!"
+    end
+
+    file = XZ::StreamWriter.open(LIVE_TEST_FILE){|w| w.write("Foo"); w.finish}
+    assert_kind_of File, file # Return value of #finish
+    assert !file.closed?, "Closed wrapped file despite of #finish!"
+    file.close # cleanup
+
+    writer = XZ::StreamWriter.open(LIVE_TEST_FILE)
+    writer.write("Foo")
+    file = writer.finish
+    assert_kind_of File, file
+    assert !file.closed?, "Closed wrapped file despite of #finish!"
+    file.close # cleanup
+  end
+
   def test_stream_writer_open
     text = File.read(PLAIN_TEXT_FILE)
 

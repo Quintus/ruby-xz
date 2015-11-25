@@ -89,6 +89,37 @@ class StreamReaderTest < Minitest::Test
 
   end
 
+  def test_finish
+    File.open(XZ_TEXT_FILE, "rb") do |file|
+      XZ::StreamReader.new(file) do |r|
+        r.read
+        assert_equal file, r.finish
+      end
+
+      assert !file.closed?, "Closed wrapped file despite of #finish!"
+    end
+
+    File.open(XZ_TEXT_FILE, "rb") do |file|
+      r = XZ::StreamReader.new(file)
+      r.read
+
+      assert_equal file, r.finish
+      assert !file.closed?, "Closed wrapped file despite of #finish!"
+    end
+
+    file = XZ::StreamReader.open(XZ_TEXT_FILE){|r| r.read; r.finish}
+    assert_kind_of File, file # Return value of #finish
+    assert !file.closed?, "Closed wrapped file despite of #finish!"
+    file.close # cleanup
+
+    reader = XZ::StreamReader.open(XZ_TEXT_FILE)
+    reader.read
+    file = reader.finish
+    assert_kind_of File, file
+    assert !file.closed?, "Closed wrapped file despite of #finish!"
+    file.close # cleanup
+  end
+
   def test_open
     XZ::StreamReader.open(XZ_TEXT_FILE) do |reader|
       assert_equal(File.read(PLAIN_TEXT_FILE), reader.read)
