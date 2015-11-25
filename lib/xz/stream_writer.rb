@@ -252,6 +252,8 @@ class XZ::StreamWriter < XZ::Stream
         ensure
           obj.close unless obj.closed?
         end
+      else
+        obj
       end
     end
   end
