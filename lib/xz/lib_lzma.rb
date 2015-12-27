@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+#--
 # The MIT License
 #
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2011,2013 Marvin Gülker et al.
+# Copyright © 2011,2013,2015 Marvin Gülker et al.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
@@ -22,19 +23,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+#++
 
 module XZ
 
-  #This module wraps functions and enums used by liblzma.
+  # This module wraps functions and enums used by liblzma.
   module LibLZMA
     extend FFI::Library
 
-    #The maximum value of an uint64_t, as defined by liblzma.
-    #Should be the same as
-    #  (2 ** 64) - 1
+    # The maximum value of an uint64_t, as defined by liblzma.
+    # Should be the same as
+    #   (2 ** 64) - 1
     UINT64_MAX = 18446744073709551615
 
-    #Activates extreme compression. Same as xz's "-e" commandline switch.
+    # Activates extreme compression. Same as xz's "-e" commandline switch.
     LZMA_PRESET_EXTREME = 1 << 31
 
     LZMA_TELL_NO_CHECK          = 0x02
@@ -42,22 +44,30 @@ module XZ
     LZMA_TELL_ANY_CHECK         = 0x04
     LZMA_CONCATENATED           = 0x08
 
-    #Placeholder enum used by liblzma for later additions.
+    # For access convenience of the above flags.
+    LZMA_DECODE_FLAGS = {
+      :tell_no_check          => LZMA_TELL_NO_CHECK,
+      :tell_unsupported_check => LZMA_TELL_UNSUPPORTED_CHECK,
+      :tell_any_check         => LZMA_TELL_ANY_CHECK,
+      :concatenated           => LZMA_CONCATENATED
+    }.freeze
+
+    # Placeholder enum used by liblzma for later additions.
     LZMA_RESERVED_ENUM = enum :lzma_reserved_enum, 0
 
-    #Actions that can be passed to the lzma_code() function.
+    # Actions that can be passed to the lzma_code() function.
     LZMA_ACTION = enum  :lzma_run, 0,
     :lzma_sync_flush,
     :lzma_full_flush,
     :lzma_finish
 
-    #Integrity check algorithms supported by liblzma.
+    # Integrity check algorithms supported by liblzma.
     LZMA_CHECK = enum :lzma_check_none,   0,
     :lzma_check_crc32,  1,
     :lzma_check_crc64,  4,
     :lzma_check_sha256, 10
 
-    #Possible return values of liblzma functions.
+    # Possible return values of liblzma functions.
     LZMA_RET = enum :lzma_ok, 0,
     :lzma_stream_end,
     :lzma_no_check,
@@ -80,10 +90,10 @@ module XZ
 
   end
 
-  #The class of the error that this library raises.
+  # The class of the error that this library raises.
   class LZMAError < StandardError
 
-    #Raises an appropriate exception if +val+ isn't a liblzma success code.
+    # Raises an appropriate exception if +val+ isn't a liblzma success code.
     def self.raise_if_necessary(val)
       case LibLZMA::LZMA_RET[val]
       when :lzma_mem_error      then raise(self, "Couldn't allocate memory!")
@@ -98,7 +108,7 @@ module XZ
 
   end
 
-  #The main struct of the liblzma library.
+  # The main struct of the liblzma library.
   class LZMAStream < FFI::Struct
     layout :next_in, :pointer, #uint8
     :avail_in, :size_t,
@@ -119,11 +129,11 @@ module XZ
     :reserved_enum1, :int,
     :reserved_enum2, :int
 
-    #This method does basicly the same thing as the
-    #LZMA_STREAM_INIT macro of liblzma. Creates a new LZMAStream
-    #that has been initialized for usage. If any argument is passed,
-    #it is assumed to be a FFI::Pointer to a lzma_stream structure
-    #and that structure is wrapped.
+    # This method does basicly the same thing as the
+    # LZMA_STREAM_INIT macro of liblzma. Creates a new LZMAStream
+    # that has been initialized for usage. If any argument is passed,
+    # it is assumed to be a FFI::Pointer to a lzma_stream structure
+    # and that structure is wrapped.
     def initialize(*args)
       if !args.empty? #Got a pointer, want to wrap it
         super

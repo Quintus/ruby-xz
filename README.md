@@ -1,11 +1,12 @@
-= ruby-xz
+ruby-xz
+=======
 
-<b>ruby-xz</b> is a basic binding to the famous
-{liblzma library}[http://tukaani.org/xz/], best known for the
-extreme compression-ratio it's native +XZ+ format achieves. ruby-xz gives
-you the possibility of creating and extracting XZ archives on any platform
-where liblzma is installed. No compilation is needed, because ruby-xz is
-written ontop of ffi[https://github.com/ffi/ffi].
+**ruby-xz** is a basic binding to the famous [liblzma library][1],
+best known for the extreme compression-ratio it's native *XZ* format
+achieves. ruby-xz gives you the possibility of creating and extracting
+XZ archives on any platform where liblzma is installed. No compilation
+is needed, because ruby-xz is written ontop of
+[ffi][2].
 
 ruby-xz supports both "intuitive" (de)compression by providing methods to
 directly operate on strings and files, but also allows you to operate
@@ -14,59 +15,82 @@ of that, ruby-xz offers an advanced interface that allows you to treat
 XZ-compressed data as IO streams, both for reading and for writing. See the
 XZ::StreamReader and XZ::StreamWriter classes for more information on this.
 
-== Installation
+Installation
+------------
 
 Install it the way you install all your gems.
 
-  # gem install ruby-xz
+```
+$ gem install ruby-xz
+```
 
-Ruby 1.9+ is required.
+Alternatively, you can clone the repository and build the most recent
+code yourself:
 
-== Usage
+```
+$ git clone git://github.com/Quintus/ruby-xz.git
+$ cd ruby-xz
+$ rake gem
+$ gem install pkg/ruby-xz-*.gem
+```
+
+Usage
+-----
 
 The documentation of the XZ module is well and you should be able to find
 everything you need to use ruby-xz. As said, it's not big, but powerful:
 You can create and extract whole archive files, compress or decompress
 streams of data or just plain strings.
 
-You can read the documentation on your local gemserver, or online at
-http://quintus.github.io/ruby-xz/.
+You can read the documentation on your local gemserver, or browse it [online][3].
 
-=== First step
+### First step ###
 
 You have to require ruby-xz. Note the file you have to require is named
 "xz.rb", so do
 
-  require "xz"
-  
+``` ruby
+require "xz"
+```
+
 to get it.
 
-=== Examples
+### Examples ###
 
-  #Compress a TAR archive
-  XZ.compress_file("myfile.tar", "myfile.tar.xz")
-  #Decompress it
-  XZ.decompress_file("myfile.tar.xz", "myfile.tar")
-  
-  #Compress everything you get from a socket (note that there HAS to be a EOF
-  #sometime, otherwise this will run infinitely)
-  XZ.compress_stream(socket){|chunk| opened_file.write(chunk)}
-  
-  #Compress a string
-  comp = XZ.compress("Mydata")
-  #Decompress it
-  data = XZ.decompress(comp)
+``` ruby
+# Compress a TAR archive
+XZ.compress_file("myfile.tar", "myfile.tar.xz")
+# Decompress it
+XZ.decompress_file("myfile.tar.xz", "myfile.tar")
+
+# Compress everything you get from a socket (note that there HAS to be a EOF
+# sometime, otherwise this will run infinitely)
+XZ.compress_stream(socket){|chunk| opened_file.write(chunk)}
+
+# Compress a string
+comp = XZ.compress("Mydata")
+# Decompress it
+data = XZ.decompress(comp)
+```
 
 Have a look at the XZ module's documentation for an in-depth description of
 what is possible.
 
-=== License
+Links
+-----
+
+* Code repository: https://github.com/Quintus/ruby-xz
+* Issue tracker: https://github.com/Quintus/ruby-xz/issues
+* Online documentation: http://quintus.github.io/ruby-xz
+
+License
+-------
 
 (The MIT License)
 
 Basic liblzma-bindings for Ruby.
 
-Copyright © 2011-2013 Marvin Gülker et al.
+Copyright © 2011-2015 Marvin Gülker et al.
 
 See AUTHORS for the full list of contributors.
 
@@ -87,3 +111,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+[1]: http://tukaani.org/xz/
+[2]: https://github.com/ffi/ffi
+[3]: http://quintus.github.io/ruby-xz

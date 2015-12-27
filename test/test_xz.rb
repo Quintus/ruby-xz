@@ -3,7 +3,7 @@
 #
 # Basic unit-tests for the liblzma-bindings for Ruby.
 #
-# Copyright © 2011,2012 Marvin Gülker
+# Copyright © 2011,2012,2015 Marvin Gülker
 # Copyright © 2011 Christoph Plank
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -38,8 +38,35 @@ class TestXZ < Minitest::Test
   end
 
   def test_compress
-    tmp = XZ.compress('01234567890123456789')
+    str = '01234567890123456789'
+    tmp = XZ.compress(str)
     assert_equal(tmp[0, 5].bytes.to_a, "\3757zXZ".bytes.to_a)
+
+    # Ensure it interacts with upstream xz properly
+    IO.popen("xzcat", "w+") do |io|
+      io.write(tmp)
+      io.close_write
+      assert_equal(io.read, str)
+    end
+  end
+
+  def test_compression_levels
+    str = "Once upon a time, there was..."
+
+    0.upto(9) do |i|
+      [true, false].each do |extreme|
+        compressed = XZ.compress(str, i, :crc64, extreme)
+        assert_equal(XZ.decompress(compressed), str)
+      end
+    end
+
+    # Maximum compression level is 9.
+    assert_raises(ArgumentError){XZ.compress("foo", 15)}
+  end
+
+  def test_roundtrip
+    str = "Once upon a time, there was..."
+    assert_equal(XZ.decompress(XZ.compress(str)), str)
   end
 
   def test_compress_file
@@ -73,5 +100,6 @@ class TestXZ < Minitest::Test
       end
     end
   end
+
 end
 

@@ -3,7 +3,7 @@
 #
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2012,2013 Marvin Gülker
+# Copyright © 2012,2013,2015 Marvin Gülker
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
@@ -25,12 +25,12 @@
 
 require_relative "./common"
 
-#For this testcase, please note that it isn’t possible to check
-#whether the compressed string is equal to some other
-#compressed string containing the same original text due to
-#different compression options and/or different versions of
-#liblzma. Hence, I can only test whether the re-decompressed
-#result is equal to what I originally had.
+# For this testcase, please note that it isn’t possible to check
+# whether the compressed string is equal to some other
+# compressed string containing the same original text due to
+# different compression options and/or different versions of
+# liblzma. Hence, I can only test whether the re-decompressed
+# result is equal to what I originally had.
 class StreamWriterTest < Minitest::Test
 
   TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
@@ -48,7 +48,7 @@ class StreamWriterTest < Minitest::Test
 
       assert_equal(text1.bytes.count, writer.write(text1))
       assert_equal(text2.bytes.count, writer.write(text2))
-      assert(text.bytes.count > writer.close)
+      assert(text.bytes.count > writer.close) # deprecated API: new API will autoclose everything
       assert(writer.closed?, "Didn't close writer")
       assert_raises(IOError){writer.write("foo")}
     end
@@ -59,29 +59,60 @@ class StreamWriterTest < Minitest::Test
   def test_file_closing
     File.open(LIVE_TEST_FILE, "wb") do |file|
       XZ::StreamWriter.new(file){|w| w.write("Foo")}
-      assert(!file.closed?, "Closed file although not expected!")
+      assert(!file.closed?, "Closed file although not expected!") # deprecated API: new API will autoclose everything
     end
 
     File.open(LIVE_TEST_FILE, "wb") do |file|
       w = XZ::StreamWriter.new(file)
       w.write("Foo")
       w.close
-      assert(!file.closed?, "Closed file although not expected!")
+      assert(!file.closed?, "Closed file although not expected!") # deprecated API: new API will autoclose everything
     end
 
-    writer = XZ::StreamWriter.new(LIVE_TEST_FILE){|w| w.write("Foo")}
-    assert(writer.instance_variable_get(:@file).closed?, "Didn't close internally opened file!")
+    writer = XZ::StreamWriter.new(LIVE_TEST_FILE){|w| w.write("Foo")} # deprecated API: new filename API is ::open
+    assert(writer.instance_variable_get(:@delegate_io).closed?, "Didn't close internally opened file!")
 
     writer = XZ::StreamWriter.new(LIVE_TEST_FILE)
     writer.write("Foo")
     writer.close
-    assert(writer.instance_variable_get(:@file).closed?, "Didn't close internally opened file!")
+    assert(writer.instance_variable_get(:@delegate_io).closed?, "Didn't close internally opened file!")
 
     # Test double closing (this should not raise)
     XZ::StreamWriter.open(LIVE_TEST_FILE) do |w|
       w.write("Foo")
       w.close
     end
+  end
+
+  def test_finish
+    File.open(LIVE_TEST_FILE, "wb") do |file|
+      XZ::StreamWriter.new(file) do |w|
+        w.write("Foo")
+        assert_equal file, w.finish
+      end
+
+      assert !file.closed?, "Closed wrapped file despite of #finish!"
+    end
+
+    File.open(LIVE_TEST_FILE, "wb") do |file|
+      w = XZ::StreamWriter.new(file)
+      w.write("Foo")
+
+      assert_equal file, w.finish
+      assert !file.closed?, "Closed wrapped file despite of #finish!"
+    end
+
+    file = XZ::StreamWriter.open(LIVE_TEST_FILE){|w| w.write("Foo"); w.finish}
+    assert_kind_of File, file # Return value of #finish
+    assert !file.closed?, "Closed wrapped file despite of #finish!"
+    file.close # cleanup
+
+    writer = XZ::StreamWriter.open(LIVE_TEST_FILE)
+    writer.write("Foo")
+    file = writer.finish
+    assert_kind_of File, file
+    assert !file.closed?, "Closed wrapped file despite of #finish!"
+    file.close # cleanup
   end
 
   def test_stream_writer_open

@@ -35,10 +35,9 @@ load "ruby-xz.gemspec"
 Gem::PackageTask.new(GEMSPEC).define
 
 Rake::RDocTask.new do |rd|
-  rd.rdoc_files.include("lib/**/*.rb", "**/*.rdoc", "COPYING")
+  rd.rdoc_files.include("lib/**/*.rb", "*.md", "**/*.rdoc", "COPYING", "AUTHORS")
   rd.title = "ruby-xz RDocs"
-  rd.main = "README.rdoc"
-  rd.generator = "emerald"
+  rd.main = "README.md"
   rd.rdoc_dir = "doc"
 end
 

@@ -3,7 +3,7 @@
 #
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2012,2013 Marvin Gülker
+# Copyright © 2012,2013,2015 Marvin Gülker
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
@@ -50,36 +50,36 @@ class StreamReaderTest < Minitest::Test
   def test_file_closing
     File.open(XZ_TEXT_FILE, "rb") do |file|
       XZ::StreamReader.new(file){|r| r.read}
-      assert(!file.closed?, "Closed file although not expected!")
+      assert(!file.closed?, "Closed file although not expected!") # deprecated API: new API autocloses everything
     end
 
     File.open(XZ_TEXT_FILE, "rb") do |file|
       reader = XZ::StreamReader.new(file)
       reader.read
       reader.close
-      assert(!file.closed?, "Closed file although not expected!")
+      assert(!file.closed?, "Closed file although not expected!") # deprecated API: new API autocloses everything
     end
 
-    reader = XZ::StreamReader.new(XZ_TEXT_FILE){|r| r.read}
-    assert(reader.instance_variable_get(:@file).closed?, "Didn't close internally created file!")
+    reader = XZ::StreamReader.new(XZ_TEXT_FILE){|r| r.read} # deprecated API: new API is ::open
+    assert(reader.instance_variable_get(:@delegate_io).closed?, "Didn't close internally created file!")
 
-    reader = XZ::StreamReader.new(XZ_TEXT_FILE)
+    reader = XZ::StreamReader.new(XZ_TEXT_FILE) # deprecated API: new API is ::open
     reader.read
     reader.close
-    assert(reader.instance_variable_get(:@file).closed?, "Didn't close internally created file!")
+    assert(reader.instance_variable_get(:@delegate_io).closed?, "Didn't close internally created file!")
 
     File.open(XZ_TEXT_FILE, "rb") do |file|
       XZ::StreamReader.new(file) do |r|
         r.read(10)
         r.rewind
-        assert(!file.closed?, "Closed handed IO during rewind!")
+        assert(!file.closed?, "Closed handed IO during rewind!") # deprecated API: new API autocloses everything
       end
     end
 
-    XZ::StreamReader.new(XZ_TEXT_FILE) do |r|
+    XZ::StreamReader.new(XZ_TEXT_FILE) do |r| # deprecated API: new API is ::open
       r.read(10)
       r.rewind
-      assert(!r.instance_variable_get(:@file).closed?, "Closed internal file during rewind")
+      assert(!r.instance_variable_get(:@delegate_io).closed?, "Closed internal file during rewind")
     end
 
     # Test double closing (this should not raise)
@@ -89,9 +89,46 @@ class StreamReaderTest < Minitest::Test
 
   end
 
+  def test_finish
+    File.open(XZ_TEXT_FILE, "rb") do |file|
+      XZ::StreamReader.new(file) do |r|
+        r.read
+        assert_equal file, r.finish
+      end
+
+      assert !file.closed?, "Closed wrapped file despite of #finish!"
+    end
+
+    File.open(XZ_TEXT_FILE, "rb") do |file|
+      r = XZ::StreamReader.new(file)
+      r.read
+
+      assert_equal file, r.finish
+      assert !file.closed?, "Closed wrapped file despite of #finish!"
+    end
+
+    file = XZ::StreamReader.open(XZ_TEXT_FILE){|r| r.read; r.finish}
+    assert_kind_of File, file # Return value of #finish
+    assert !file.closed?, "Closed wrapped file despite of #finish!"
+    file.close # cleanup
+
+    reader = XZ::StreamReader.open(XZ_TEXT_FILE)
+    reader.read
+    file = reader.finish
+    assert_kind_of File, file
+    assert !file.closed?, "Closed wrapped file despite of #finish!"
+    file.close # cleanup
+  end
+
   def test_open
     XZ::StreamReader.open(XZ_TEXT_FILE) do |reader|
       assert_equal(File.read(PLAIN_TEXT_FILE), reader.read)
+    end
+
+    File.open(XZ_TEXT_FILE, "rb") do |file|
+      XZ::StreamReader.open(file) do |reader| # deprecated API: new API is ::new; deprecated API: new API autocloses everything
+        assert_equal(File.read(PLAIN_TEXT_FILE), reader.read)
+      end
     end
   end
 

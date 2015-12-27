@@ -3,7 +3,7 @@
 #
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2011,2012,2013 Marvin Gülker
+# Copyright © 2011,2012,2013,2015 Marvin Gülker
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
@@ -23,35 +23,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-lib = "xz"
-lib_file = File.expand_path("../lib/#{lib}.rb", __FILE__)
-File.read(lib_file) =~ /\bVERSION\s*=\s*["'](.+?)["']/
-version = $1.gsub("-", ".")
+require_relative "lib/xz/version"
 
 GEMSPEC = Gem::Specification.new do |spec|
   spec.name        = "ruby-xz"
-  spec.summary     = "XZ compression via liblzma for Ruby."
+  spec.summary     = "XZ compression via liblzma for Ruby, using ffi."
   spec.description =<<DESCRIPTION
-This is a basic binding for liblzma that allows you to
-create and extract XZ-compressed archives. It can cope with big
-files as well as small ones, but doesn't offer much
-of the possibilities liblzma itself has.
+These are simple Ruby bindings for the liblzma library
+(http://tukaani.org/xz/), which is best known for the
+extreme compression ratio its native XZ format achieves.
+Since FFI is used to implement the bindings, no compilation
+is needed and they should work with JRuby as well.
 DESCRIPTION
-  spec.version               = version
+  spec.version               = XZ::VERSION.gsub("-", ".")
   spec.author                = "Marvin Gülker"
   spec.email                 = "quintus@quintilianus.eu"
   spec.license               = "MIT"
   spec.homepage              = "http://quintus.github.io/ruby-xz"
   spec.platform              = Gem::Platform::RUBY
   spec.required_ruby_version = ">=1.9.3"
-  spec.add_dependency("ffi")
-  spec.add_dependency("io-like")
-  spec.add_development_dependency("emerald")
-  spec.add_development_dependency("turn")
+  spec.add_runtime_dependency("ffi", "~> 1.9")
+  spec.add_runtime_dependency("io-like", "~> 0.3")
+  spec.add_development_dependency("archive-tar-minitar", "~> 0.5")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
-  spec.files << "COPYING"
+  spec.files << "COPYING" << "AUTHORS"
   spec.has_rdoc         = true
-  spec.extra_rdoc_files = %w[README.rdoc HISTORY.rdoc COPYING]
-  spec.rdoc_options << "-t" << "ruby-xz RDocs" << "-m" << "README.rdoc"
+  spec.extra_rdoc_files = %w[README.md HISTORY.rdoc COPYING AUTHORS]
+  spec.rdoc_options << "-t" << "ruby-xz RDocs" << "-m" << "README.md"
 end

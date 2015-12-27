@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-# (The MIT license)
+#--
+# (The MIT License)
 #
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2012,2013,2015 Marvin Gülker
+# Copyright © 2015 Marvin Gülker
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
@@ -22,12 +23,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+#++
 
-require_relative "../lib/xz"
+module XZ
 
-require "pathname"
-require "tempfile"
-require "minitest/autorun"
+  # The version of this library.
+  VERSION = "0.2.2".freeze
 
-# These are annoying during tests
-XZ.disable_deprecation_notices = true
+end

@@ -3,7 +3,7 @@
 #
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2012,2013 Marvin Gülker
+# Copyright © 2012,2013,2015 Marvin Gülker
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
@@ -25,11 +25,11 @@
 
 require_relative "./common"
 
-#This test checks whether or not we conform to the
-#contracts enforced by the io-like gem.
+# This test checks whether or not we conform to the
+# contracts enforced by the io-like gem.
 #
-#Note that this test checks a private API (the one exposed
-#to the IO::Like library), hence the many calls to #send.
+# Note that this test checks a private API (the one exposed
+# to the IO::Like library), hence the many calls to #send.
 class IOLikeSpecsTest < Minitest::Test
 
   TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
