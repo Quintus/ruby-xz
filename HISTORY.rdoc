@@ -2,7 +2,7 @@
 
 == 0.2.2 (2015-12-27)
 
-* *Add* XZ.disable_deprecation_notes
+* *Add* XZ.disable_deprecation_notices
 * *Deprecate* use of XZ::StreamReader.open with an IO argument
 * *Deprecate* use of XZ::StreamReader.new with a filename argument
 * *Deprecate* use of XZ::StreamWriter.open with an IO argument
