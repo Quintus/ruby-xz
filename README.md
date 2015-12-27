@@ -90,7 +90,7 @@ License
 
 Basic liblzma-bindings for Ruby.
 
-Copyright © 2011-2014 Marvin Gülker et al.
+Copyright © 2011-2015 Marvin Gülker et al.
 
 See AUTHORS for the full list of contributors.
 
