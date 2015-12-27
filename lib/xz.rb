@@ -48,6 +48,16 @@ module XZ
 
   class << self
 
+    # Force ruby-xz to be silent about deprecations. Using this is
+    # discouraged so that you are aware of upcoming changes to the
+    # API. However, if your standard error stream is closed,
+    # outputting the deprecation notices might result in an exception,
+    # so this method allows you to surpress these notices. Ensure you
+    # read the HISTORY.rdoc file carefully instead.
+    def disable_deprecation_notices=(bool)
+      @disable_deprecation_notices = bool
+    end
+
     # :nodoc:
     #
     # Output a deprecation notice.
@@ -57,16 +67,6 @@ module XZ
       unless @disable_deprecation_notices
         $stderr.puts("DEPRECATION NOTICE: #{msg}\n#{caller.drop(1).join("\n\t")}")
       end
-    end
-
-    # Force ruby-xz to be silent about deprecations. Using this is
-    # discouraged so that you are aware of upcoming changes to the
-    # API. However, if your standard error stream is closed,
-    # outputting the deprecation notices might result in an exception,
-    # so this method allows you to surpress these notices. Ensure you
-    # read the HISTORY.rdoc file carefully instead.
-    def disable_deprecation_notices=(bool)
-      @disable_deprecation_notices = bool
     end
 
     # call-seq:
