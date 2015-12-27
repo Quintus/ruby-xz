@@ -1,6 +1,6 @@
 = Version history
 
-== 0.2.2 (unreleased)
+== 0.2.2 (2015-12-27)
 
 * *Add* XZ.disable_deprecation_notes
 * *Deprecate* use of XZ::StreamReader.open with an IO argument
