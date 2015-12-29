@@ -38,6 +38,7 @@ Rake::RDocTask.new do |rd|
   rd.rdoc_files.include("lib/**/*.rb", "*.md", "**/*.rdoc", "COPYING", "AUTHORS")
   rd.title = "ruby-xz RDocs"
   rd.main = "README.md"
+  rd.generator = "hanna"
   rd.rdoc_dir = "doc"
 end
 
