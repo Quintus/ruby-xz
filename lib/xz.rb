@@ -58,10 +58,8 @@ module XZ
       @disable_deprecation_notices = bool
     end
 
-    # :nodoc:
-    #
     # Output a deprecation notice.
-    def deprecate(msg)
+    def deprecate(msg) # :nodoc:
       @disable_deprecation_notices ||= false
 
       unless @disable_deprecation_notices
