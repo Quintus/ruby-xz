@@ -1,3 +1,13 @@
+UNMAINTAINED PROJECT
+====================
+
+As of 2017-01-02, this project is unmaintained. I regret this, but I
+don't have the time to keep up with it. Feel free to fork it if you
+want. Bug me at m-guelker [at] guelkerdev [dot] de if you want the
+`ruby-xz` RubyGem name.
+
+Marvin
+
 ruby-xz
 =======
 
