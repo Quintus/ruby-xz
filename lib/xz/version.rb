@@ -4,7 +4,7 @@
 #
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2015 Marvin Gülker
+# Copyright © 2015,2018 Marvin Gülker
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
@@ -28,6 +28,6 @@
 module XZ
 
   # The version of this library.
-  VERSION = "0.2.3".freeze
+  VERSION = "0.3.0".freeze
 
 end

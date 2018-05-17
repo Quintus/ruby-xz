@@ -4,7 +4,7 @@
 #
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2011,2012,2015 Marvin Gülker
+# Copyright © 2011,2012,2015,2018 Marvin Gülker
 # Copyright © 2011 Christoph Plank
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -27,7 +27,8 @@
 #++
 
 require "pathname"
-require "ffi"
+require "fiddle"
+require "fiddle/import"
 require 'stringio'
 require "io/like"
 
@@ -134,8 +135,9 @@ module XZ
         val | flag
       end
 
-      stream = LZMAStream.new
-      res = LibLZMA.lzma_stream_decoder(stream.pointer,
+      stream = LibLZMA::LZMAStream.malloc
+      LibLZMA.LZMA_STREAM_INIT(stream)
+      res = LibLZMA.lzma_stream_decoder(stream.to_ptr,
                                         memory_limit,
                                         allflags)
 
@@ -149,9 +151,9 @@ module XZ
         lzma_code(io, stream){|chunk| res << chunk}
       end
 
-      LibLZMA.lzma_end(stream.pointer)
+      LibLZMA.lzma_end(stream.to_ptr)
 
-      block_given? ? stream[:total_out] : res
+      block_given? ? stream.total_out : res
     end
     alias decode_stream decompress_stream
 
@@ -220,10 +222,11 @@ module XZ
 
       compression_level |= LibLZMA::LZMA_PRESET_EXTREME if extreme
 
-      stream = LZMAStream.new
-      res = LibLZMA.lzma_easy_encoder(stream.pointer,
+      stream = LibLZMA::LZMAStream.malloc
+      LibLZMA::LZMA_STREAM_INIT(stream)
+      res = LibLZMA.lzma_easy_encoder(stream.to_ptr,
                                       compression_level,
-                                      LibLZMA::LZMA_CHECK[:"lzma_check_#{check}"])
+                                      LibLZMA.const_get(:"LZMA_CHECK_#{check.upcase}"))
 
       LZMAError.raise_if_necessary(res)
 
@@ -235,9 +238,9 @@ module XZ
         lzma_code(io, stream){|chunk| res << chunk}
       end
 
-      LibLZMA.lzma_end(stream.pointer)
+      LibLZMA.lzma_end(stream.to_ptr)
 
-      block_given? ? stream[:total_out] : res
+      block_given? ? stream.total_out : res
     end
     alias encode_stream compress_stream
 
@@ -368,30 +371,23 @@ module XZ
 
     private
 
-    # This method returns the size of +str+ in bytes.
-    def binary_size(str)
-      # Believe it or not, but this is faster than str.bytes.to_a.size.
-      # I benchmarked it, and it is as twice as fast.
-      str.dup.force_encoding(Encoding::BINARY).size
-    end
-
     # This method does the heavy work of (de-)compressing a stream. It
     # takes an IO object to read data from (that means the IO must be
-    # opened for reading) and a XZ::LZMAStream object that is used to
+    # opened for reading) and a XZ::LibLZMA::LZMAStream object that is used to
     # (de-)compress the data. Furthermore this method takes a block
     # which gets passed the (de-)compressed data in chunks one at a
     # time--this is needed to allow (de-)compressing of very large
     # files that can't be loaded fully into memory.
     def lzma_code(io, stream)
-      input_buffer_p  = FFI::MemoryPointer.new(CHUNK_SIZE)
-      output_buffer_p = FFI::MemoryPointer.new(CHUNK_SIZE)
+      input_buffer_p  = Fiddle::Pointer.malloc(CHUNK_SIZE) # automatically freed by fiddle on GC
+      output_buffer_p = Fiddle::Pointer.malloc(CHUNK_SIZE) # automatically freed by fiddle on GC
 
       while str = io.read(CHUNK_SIZE)
-        input_buffer_p.write_string(str)
+        input_buffer_p[0, str.bytesize] = str
 
         # Set the data for compressing
-        stream[:next_in]  = input_buffer_p
-        stream[:avail_in] = binary_size(str)
+        stream.next_in  = input_buffer_p
+        stream.avail_in = str.bytesize
 
         # Now loop until we gathered all the data in
         # stream[:next_out]. Depending on the amount of data, this may
@@ -405,25 +401,26 @@ module XZ
         # the amount of data to compress is small).
         loop do
           # Prepare for getting the compressed_data
-          stream[:next_out]  = output_buffer_p
-          stream[:avail_out] = CHUNK_SIZE
+          stream.next_out  = output_buffer_p
+          stream.avail_out = CHUNK_SIZE
 
           # Compress the data
           res = if io.eof?
-            LibLZMA.lzma_code(stream.pointer, LibLZMA::LZMA_ACTION[:lzma_finish])
+            LibLZMA.lzma_code(stream.to_ptr, LibLZMA::LZMA_FINISH)
           else
-            LibLZMA.lzma_code(stream.pointer, LibLZMA::LZMA_ACTION[:lzma_run])
+            LibLZMA.lzma_code(stream.to_ptr, LibLZMA::LZMA_RUN)
           end
           check_lzma_code_retval(res)
 
           # Write the compressed data
-          data = output_buffer_p.read_string(CHUNK_SIZE - stream[:avail_out])
+          # Note: avail_out gives how much space is left after the new data
+          data = output_buffer_p[0, CHUNK_SIZE - stream.avail_out]
           yield(data)
 
           # If the buffer is completely filled, it's likely that there
           # is more data liblzma wants to hand to us. Start a new
           # iteration, but don't provide new input data.
-          break unless stream[:avail_out] == 0
+          break unless stream.avail_out == 0
         end #loop
       end #while
     end #lzma_code
@@ -432,11 +429,10 @@ module XZ
     # return value of the lzma_code() function and shows them if
     # necessary.
     def check_lzma_code_retval(code)
-      e = LibLZMA::LZMA_RET
       case code
-      when e[:lzma_no_check]          then warn("Couldn't verify archive integrity--archive has no integrity checksum.")
-      when e[:lzma_unsupported_check] then warn("Couldn't verify archive integrity--archive has an unsupported integrity checksum.")
-      when e[:lzma_get_check]         then nil # This isn't useful for us. It indicates that the checksum type is now known.
+      when LibLZMA::LZMA_NO_CHECK then warn("Couldn't verify archive integrity--archive has no integrity checksum.")
+      when LibLZMA::LZMA_UNSUPPORTED_CHECK then warn("Couldn't verify archive integrity--archive has an unsupported integrity checksum.")
+      when LibLZMA::LZMA_GET_CHECK then nil # This isn't useful. It indicates that the checksum type is now known.
       else
         LZMAError.raise_if_necessary(code)
       end
@@ -447,6 +443,7 @@ module XZ
 end
 
 require_relative "xz/version"
+require_relative "xz/fiddle_helper"
 require_relative "xz/lib_lzma"
 require_relative "xz/stream"
 require_relative "xz/stream_writer"
