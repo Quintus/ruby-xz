@@ -39,7 +39,7 @@
 #
 # Most of IO's methods are implemented in this class or one of the
 # subclasses. The most notable exception is that it is not possible
-# to seek in XZ archives (trying to do se results in NotImplementedError).
+# to seek in XZ archives (#seek and #pos= are not defined).
 # Many methods that are not expressly documented in the RDoc
 # still exist; this class uses Ruby's Forwardable module to forward
 # them to the underlying IO object.
