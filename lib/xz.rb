@@ -30,7 +30,7 @@ require "pathname"
 require "fiddle"
 require "fiddle/import"
 require 'stringio'
-require "io/like"
+require "forwardable"
 
 # The namespace and main module of this library. Each method of this
 # module may raise exceptions of class XZ::LZMAError, which is not

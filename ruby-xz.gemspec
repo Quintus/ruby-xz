@@ -3,7 +3,7 @@
 #
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2011,2012,2013,2015 Marvin Gülker
+# Copyright © 2011,2012,2013,2015,2018 Marvin Gülker
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
@@ -27,23 +27,21 @@ require_relative "lib/xz/version"
 
 GEMSPEC = Gem::Specification.new do |spec|
   spec.name        = "ruby-xz"
-  spec.summary     = "XZ compression via liblzma for Ruby, using ffi."
+  spec.summary     = "XZ compression via liblzma for Ruby, using fiddle."
   spec.description =<<DESCRIPTION
 These are simple Ruby bindings for the liblzma library
 (http://tukaani.org/xz/), which is best known for the
 extreme compression ratio its native XZ format achieves.
-Since FFI is used to implement the bindings, no compilation
-is needed and they should work with JRuby as well.
+Since fiddle is used to implement the bindings, no compilation
+is needed.
 DESCRIPTION
   spec.version               = XZ::VERSION.gsub("-", ".")
   spec.author                = "Marvin Gülker"
-  spec.email                 = "quintus@quintilianus.eu"
+  spec.email                 = "m-guelker@phoenixmail.de"
   spec.license               = "MIT"
   spec.homepage              = "http://quintus.github.io/ruby-xz"
   spec.platform              = Gem::Platform::RUBY
-  spec.required_ruby_version = ">=1.9.3"
-  spec.add_runtime_dependency("ffi", "~> 1.9")
-  spec.add_runtime_dependency("io-like", "~> 0.3")
+  spec.required_ruby_version = ">=2.0.0"
   spec.add_development_dependency("archive-tar-minitar", "~> 0.5")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
