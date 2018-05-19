@@ -3,7 +3,7 @@
 #
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2012,2013,2015 Marvin Gülker
+# Copyright © 2012,2013,2015,2018 Marvin Gülker
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
@@ -48,7 +48,8 @@ class StreamWriterTest < Minitest::Test
 
       assert_equal(text1.bytes.count, writer.write(text1))
       assert_equal(text2.bytes.count, writer.write(text2))
-      assert(text.bytes.count > writer.close) # deprecated API: new API will autoclose everything
+      assert(text.bytes.count > writer.close)
+      assert(writer.finished?, "Didn't finish writer")
       assert(writer.closed?, "Didn't close writer")
       assert_raises(IOError){writer.write("foo")}
     end
@@ -58,23 +59,28 @@ class StreamWriterTest < Minitest::Test
 
   def test_file_closing
     File.open(LIVE_TEST_FILE, "wb") do |file|
-      XZ::StreamWriter.new(file){|w| w.write("Foo")}
-      assert(!file.closed?, "Closed file although not expected!") # deprecated API: new API will autoclose everything
+      w = XZ::StreamWriter.new(file)
+      w.write("Foo")
+      w.finish
+      assert(!file.closed?, "Closed file although not expected!")
     end
 
     File.open(LIVE_TEST_FILE, "wb") do |file|
       w = XZ::StreamWriter.new(file)
       w.write("Foo")
       w.close
-      assert(!file.closed?, "Closed file although not expected!") # deprecated API: new API will autoclose everything
+      assert(file.finished?, "Didn't finish writer although expected!")
+      assert(file.closed?, "Didn't close file although expected!")
     end
 
-    writer = XZ::StreamWriter.new(LIVE_TEST_FILE){|w| w.write("Foo")} # deprecated API: new filename API is ::open
+    writer = XZ::StreamWriter.open(LIVE_TEST_FILE){|w| w.write("Foo")}
+    assert(writer.finished?, "Didn't finish writer")
     assert(writer.instance_variable_get(:@delegate_io).closed?, "Didn't close internally opened file!")
 
     writer = XZ::StreamWriter.new(LIVE_TEST_FILE)
     writer.write("Foo")
     writer.close
+    assert(writer.finished?, "Didn't finish writer")
     assert(writer.instance_variable_get(:@delegate_io).closed?, "Didn't close internally opened file!")
 
     # Test double closing (this should not raise)
@@ -86,7 +92,7 @@ class StreamWriterTest < Minitest::Test
 
   def test_finish
     File.open(LIVE_TEST_FILE, "wb") do |file|
-      XZ::StreamWriter.new(file) do |w|
+      XZ::StreamWriter.open(file) do |w|
         w.write("Foo")
         assert_equal file, w.finish
       end
@@ -102,7 +108,8 @@ class StreamWriterTest < Minitest::Test
       assert !file.closed?, "Closed wrapped file despite of #finish!"
     end
 
-    file = XZ::StreamWriter.open(LIVE_TEST_FILE){|w| w.write("Foo"); w.finish}
+    file = nil
+    XZ::StreamWriter.open(LIVE_TEST_FILE){|w| w.write("Foo"); file = w.finish}
     assert_kind_of File, file # Return value of #finish
     assert !file.closed?, "Closed wrapped file despite of #finish!"
     file.close # cleanup
