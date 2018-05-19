@@ -1,5 +1,12 @@
 = Version history
 
+== 0.3.0 (???)
+
+* *Dependency* Remove dependency on ffi. ruby-xz now uses fiddle from
+  the stdlib instead.
+* *Dependency* Remove dependency on io-like. ruby-xz now implements
+  all the IO mechanics itself.
+
 == 0.2.3 (2015-12-29)
 
 * *Fix* documentation of XZ module (a :nodoc: was causing havoc
