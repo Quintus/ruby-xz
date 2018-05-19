@@ -42,7 +42,7 @@ DESCRIPTION
   spec.homepage              = "http://quintus.github.io/ruby-xz"
   spec.platform              = Gem::Platform::RUBY
   spec.required_ruby_version = ">=2.3.0"
-  spec.add_development_dependency("archive-tar-minitar", "~> 0.5")
+  spec.add_development_dependency("minitar", "~> 0.6")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
   spec.files << "COPYING" << "AUTHORS"

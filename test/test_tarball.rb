@@ -23,7 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-require "archive/tar/minitar"
+require "minitar"
 require_relative "./common"
 
 # Create XZ-compressed tarballs and unpack them with the system's
@@ -36,7 +36,7 @@ class TarballTest < Minitest::Test
     content  = File.read("test-data/lorem_ipsum.txt")
 
     XZ::StreamWriter.open(filename) do |txz|
-      Archive::Tar::Minitar.pack("test-data/lorem_ipsum.txt", txz)
+      Minitar.pack("test-data/lorem_ipsum.txt", txz)
     end
 
     Dir.mktmpdir("testtarball") do |dir|
@@ -59,7 +59,7 @@ class TarballTest < Minitest::Test
     Dir.mktmpdir("testtarball") do |dir|
       Dir.chdir(dir) do
         XZ::StreamReader.open(filename) do |txz|
-          Archive::Tar::Minitar.unpack(txz, ".")
+          Minitar.unpack(txz, ".")
         end
 
         assert File.exist?("test-data/lorem_ipsum.txt"), "compresed file missing!"
