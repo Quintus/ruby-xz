@@ -48,7 +48,9 @@ class StreamWriterTest < Minitest::Test
 
       assert_equal(text1.bytes.count, writer.write(text1))
       assert_equal(text2.bytes.count, writer.write(text2))
-      assert(text.bytes.count > writer.close)
+      writer.close
+
+      assert(text.bytesize > File.stat(LIVE_TEST_FILE).size, "Compression did not compress")
       assert(writer.finished?, "Didn't finish writer")
       assert(writer.closed?, "Didn't close writer")
       assert_raises(IOError){writer.write("foo")}
@@ -69,7 +71,7 @@ class StreamWriterTest < Minitest::Test
       w = XZ::StreamWriter.new(file)
       w.write("Foo")
       w.close
-      assert(file.finished?, "Didn't finish writer although expected!")
+      assert(w.finished?, "Didn't finish writer although expected!")
       assert(file.closed?, "Didn't close file although expected!")
     end
 
@@ -77,7 +79,7 @@ class StreamWriterTest < Minitest::Test
     assert(writer.finished?, "Didn't finish writer")
     assert(writer.instance_variable_get(:@delegate_io).closed?, "Didn't close internally opened file!")
 
-    writer = XZ::StreamWriter.new(LIVE_TEST_FILE)
+    writer = XZ::StreamWriter.new(File.open(LIVE_TEST_FILE, "wb"))
     writer.write("Foo")
     writer.close
     assert(writer.finished?, "Didn't finish writer")
@@ -91,15 +93,6 @@ class StreamWriterTest < Minitest::Test
   end
 
   def test_finish
-    File.open(LIVE_TEST_FILE, "wb") do |file|
-      XZ::StreamWriter.open(file) do |w|
-        w.write("Foo")
-        assert_equal file, w.finish
-      end
-
-      assert !file.closed?, "Closed wrapped file despite of #finish!"
-    end
-
     File.open(LIVE_TEST_FILE, "wb") do |file|
       w = XZ::StreamWriter.new(file)
       w.write("Foo")
