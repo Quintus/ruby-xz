@@ -49,6 +49,6 @@ DESCRIPTION
   spec.files.concat(Dir["**/*.rdoc"])
   spec.files << "COPYING" << "AUTHORS"
   spec.has_rdoc         = true
-  spec.extra_rdoc_files = %w[README.md HISTORY.rdoc COPYING AUTHORS]
+  spec.extra_rdoc_files = %w[README.md HISTORY.rdoc LICENSE AUTHORS]
   spec.rdoc_options << "-t" << "ruby-xz RDocs" << "-m" << "README.md"
 end
