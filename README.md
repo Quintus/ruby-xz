@@ -5,8 +5,9 @@ ruby-xz
 best known for the extreme compression-ratio it's native *XZ* format
 achieves. ruby-xz gives you the possibility of creating and extracting
 XZ archives on any platform where liblzma is installed. No compilation
-is needed, because ruby-xz is written ontop of
-[ffi][2].
+is needed, because ruby-xz is written on top of Ruby's fiddle library
+(part of the standard libary). ruby-xz does not have any dependencies
+other than Ruby itself.
 
 ruby-xz supports both "intuitive" (de)compression by providing methods to
 directly operate on strings and files, but also allows you to operate
@@ -14,6 +15,10 @@ directly on IO streams (see the various methods of the XZ module). On top
 of that, ruby-xz offers an advanced interface that allows you to treat
 XZ-compressed data as IO streams, both for reading and for writing. See the
 XZ::StreamReader and XZ::StreamWriter classes for more information on this.
+
+**Note**: Version 1.0.0 breaks the API of the XZ::StreamReader and
+XZ::StreamWriter classes. If you used them, you will need to adapt
+your code. The API now behaves like Ruby's own zlib library does.
 
 Installation
 ------------
@@ -42,7 +47,7 @@ everything you need to use ruby-xz. As said, it's not big, but powerful:
 You can create and extract whole archive files, compress or decompress
 streams of data or just plain strings.
 
-You can read the documentation on your local gemserver, or browse it [online][3].
+You can read the documentation on your local gemserver, or browse it [online][2].
 
 ### First step ###
 
@@ -113,5 +118,4 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 [1]: http://tukaani.org/xz/
-[2]: https://github.com/ffi/ffi
-[3]: http://quintus.github.io/ruby-xz
+[2]: http://quintus.github.io/ruby-xz
