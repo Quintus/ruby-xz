@@ -37,6 +37,12 @@ class TestXZ < Minitest::Test
     assert_equal(XZ.decompress(TEST_XZ), '01234567890123456789')
   end
 
+  def test_corrupt_archive
+    corrupt_xz = TEST_XZ.dup
+    corrupt_xz[20] = "\023"
+    assert_raises(XZ::LZMAError) { XZ.decompress(corrupt_xz) }
+  end
+
   def test_compress
     str = '01234567890123456789'
     tmp = XZ.compress(str)
