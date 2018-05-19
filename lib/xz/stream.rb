@@ -61,7 +61,7 @@ class XZ::Stream
   def_delegator :@delegate_io, :ioctl
   def_delegator :@delegate_io, :isatty
   def_delegator :@delegate_io, :pid
-  def_delegator :@delegate_io, :stat
+  #def_delegator :@delegate_io, :stat # If this is available the minitar gem thinks it's a File and wants to seek it O_o
   def_delegator :@delegate_io, :sync # TODO: use liblzma's own syncing functionality?
   def_delegator :@delegate_io, :"sync=" # TODO: use liblzma's own syncing functionality?
   def_delegator :@delegate_io, :"tty?"
@@ -230,17 +230,9 @@ class XZ::Stream
   end
   alias tell pos
 
-  # It is not possible to seek in compressed data. Therefore, this
-  # method always raises NotImplementedError.
-  def pos=(*args)
-    raise(NotImplementedError, "Cannot seek in compressed streams")
-  end
-
-  # It is not possible to seek in compressed data. Therefore, this
-  # method always raises NotImplementedError.
-  def seek(*args)
-    raise(NotImplementedError, "Cannot seek in compressed streams")
-  end
+  # Do not define #pos= and #seek, not even to throw NotImplementedError.
+  # Reason: The minitar gem thinks it can use this methods then and provokes
+  # the NotImplementedError exception.
 
   # Like IO#<<.
   def <<(obj)
