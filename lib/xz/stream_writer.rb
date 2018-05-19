@@ -113,7 +113,7 @@ class XZ::StreamWriter < XZ::Stream
     origpos = @pos
 
     args.each do |arg|
-      @pos += arg.bytesize
+      @pos += arg.to_s.bytesize
       lzma_code(arg.to_s, XZ::LibLZMA::LZMA_RUN) do |compressed|
         @delegate_io.write(compressed)
       end
