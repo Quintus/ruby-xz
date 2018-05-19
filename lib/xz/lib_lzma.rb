@@ -35,7 +35,7 @@ module XZ
     extend Fiddle::Importer
     extend XZ::FiddleHelper
 
-    dlloadanyof 'liblzma.so.5', 'liblzma.so', 'liblzma'
+    dlloadanyof 'liblzma.so.5', 'liblzma.so', 'liblzma.5.dylib', 'liblzma.dylib', 'liblzma'
 
     typealias "uint32_t", "unsigned int"
     typealias "uint64_t", "unsigned long long"
