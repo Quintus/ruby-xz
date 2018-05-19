@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-# (The MIT license)
-#
+#--
 # Basic liblzma-bindings for Ruby.
 #
-# Copyright © 2012,2013,2015 Marvin Gülker
+# Copyright © 2011-2018 Marvin Gülker et al.
+#
+# See AUTHORS for the full list of contributors.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the ‘Software’),
@@ -22,6 +23,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+#++
 
 require_relative "../lib/xz"
 

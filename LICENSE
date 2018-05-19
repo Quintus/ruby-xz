@@ -1,7 +1,3 @@
-# -*- mode: ruby; coding: utf-8 -*-
-=begin
-Basic liblzma-bindings for Ruby.
-
 Copyright © 2011-2018 Marvin Gülker et al.
 
 See AUTHORS for the full list of contributors.
@@ -23,30 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-=end
-
-gem "rdoc"
-
-require "rake"
-require "rubygems/package_task"
-require "rdoc/task"
-
-load "ruby-xz.gemspec"
-
-Gem::PackageTask.new(GEMSPEC).define
-
-Rake::RDocTask.new do |rd|
-  rd.rdoc_files.include("lib/**/*.rb", "*.md", "**/*.rdoc", "COPYING", "AUTHORS")
-  rd.title = "ruby-xz RDocs"
-  rd.main = "README.md"
-  rd.generator = "hanna"
-  rd.rdoc_dir = "doc"
-end
-
-desc "Runs the tests."
-task :test do
-  cd "test"
-  Dir["test_*.rb"].each do |filename|
-    ruby filename
-  end
-end
