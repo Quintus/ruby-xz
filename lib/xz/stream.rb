@@ -176,6 +176,10 @@ class XZ::Stream
   # initializer, this done automatically for you.
   #
   # Subsequent calls to #read or #write will cause an IOError.
+  #
+  # Returns the underlying IO object. This allows you to retrieve
+  # the File instance that was automatically created when using
+  # the +open+ method's block form.
   def finish
     return if @finished
 
@@ -183,6 +187,8 @@ class XZ::Stream
     # This would belong into a destructor if Ruby had that.
     XZ::LibLZMA.lzma_end(@lzma_stream)
     @finished = true
+
+    @delegate_io
   end
 
 
