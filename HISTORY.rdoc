@@ -11,6 +11,9 @@
   return the new instance, even if a block is given to the method
   (previous behaviour was to return the return value of the block).
   This is part of the syncing with Ruby's zlib API.
+* *BreakingChange* Stream#close now returns nil instead of the
+  number of bytes written. This syncs Stream#close with Ruby's
+  own IO#close, which also returns nil.
 * *Dependency* Remove dependency on ffi. ruby-xz now uses fiddle from
   the stdlib instead.
 * *Dependency* Remove dependency on io-like. ruby-xz now implements

@@ -199,6 +199,7 @@ class XZ::Stream
   def close
     finish unless @finished
     @delegate_io.close unless @delegate_io.closed?
+    nil
   end
 
   # Always raises IOError, because XZ streams can never be duplex.
