@@ -6,6 +6,7 @@
   the stdlib instead.
 * *Dependency* Remove dependency on io-like. ruby-xz now implements
   all the IO mechanics itself.
+* *Dependency* Bump required Ruby version to 2.3.0.
 
 == 0.2.3 (2015-12-29)
 
