@@ -88,14 +88,14 @@ class XZ::StreamReader < XZ::Stream
     @options = options.freeze
     @readbuf = String.new
 
-    allflags = options[:flags].reduce(0) do |val, flag|
+    @allflags = options[:flags].reduce(0) do |val, flag|
       flag = XZ::LibLZMA::LZMA_DECODE_FLAGS[flag] || raise(ArgumentError, "Unknown flag #{flag}")
       val | flag
     end
 
     res = XZ::LibLZMA.lzma_stream_decoder(@lzma_stream.to_ptr,
                                       @options[:memory_limit],
-                                      allflags)
+                                      @allflags)
     XZ::LZMAError.raise_if_necessary(res)
   end
 
@@ -124,7 +124,7 @@ class XZ::StreamReader < XZ::Stream
         action = @delegate_io.eof? ? XZ::LibLZMA::LZMA_FINISH : XZ::LibLZMA::LZMA_RUN
       end
 
-      lzma_code(data) { |decompressed| @readbuf << decompressed }
+      lzma_code(data, action) { |decompressed| @readbuf << decompressed }
 
       # If the requested amount has been read, return it.
       # Also return if EOF has been reached. Note that
@@ -165,7 +165,7 @@ class XZ::StreamReader < XZ::Stream
     @readbuf.clear
     res = XZ::LibLZMA.lzma_stream_decoder(@lzma_stream.to_ptr,
                                       @options[:memory_limit],
-                                      allflags)
+                                      @allflags)
     XZ::LZMAError.raise_if_necessary(res)
 
     0 # Mimic IO#rewind's return value
