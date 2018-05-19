@@ -54,8 +54,9 @@
 # StreamWriter#close. Instead, you then close your IO object manually
 # using IO#close once you're done with it.
 #
-# *NOTE*: It is not useful to call #finish if you used the ::open
-# method as you don't have access to the underlying IO object then.
+# *NOTE*: Using #finish inside the +open+ method's block allows
+# you to continue using that writer's File instance as it is
+# returned by #finish.
 #
 # == Example
 #
@@ -78,7 +79,7 @@ class XZ::StreamWriter < XZ::Stream
 
     if block_given?
       begin
-        return yield(writer)
+        yield(writer)
       ensure
         # Close both writer and delegate IO via writer.close
         # unless the writer has manually been finished (usually

@@ -70,7 +70,7 @@ class XZ::StreamReader < XZ::Stream
 
     if block_given?
       begin
-        return yield(reader)
+        yield(reader)
       ensure
         # Close both delegate IO and reader.
         reader.close unless reader.finished?
