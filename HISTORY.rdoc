@@ -1,6 +1,6 @@
 = Version history
 
-== 1.0.0 (???)
+== 1.0.0 (2018-05-20)
 
 * *BreakingChange* The XZ module's methods now take any parameters
   beyond the IO object as real Ruby keyword arguments rather than
