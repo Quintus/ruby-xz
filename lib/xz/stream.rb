@@ -314,7 +314,7 @@ class XZ::Stream
       str << read(1)
       str.force_encoding(@external_encoding)
 
-      break if str.valid_encoding?
+      break if str.valid_encoding? || eof?
     end
 
     # Transcode to internal encoding if one was requested
