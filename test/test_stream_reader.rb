@@ -29,9 +29,10 @@ require File.join(File.expand_path(File.dirname(__FILE__)), 'common')
 
 class StreamReaderTest < Minitest::Test
 
-  TEST_DATA_DIR   = Pathname.new(__FILE__).dirname + "test-data"
-  PLAIN_TEXT_FILE = TEST_DATA_DIR + "lorem_ipsum.txt"
-  XZ_TEXT_FILE    = TEST_DATA_DIR + "lorem_ipsum.txt.xz"
+  TEST_DATA_DIR    = Pathname.new(__FILE__).dirname + "test-data"
+  PLAIN_TEXT_FILE  = TEST_DATA_DIR + "lorem_ipsum.txt"
+  XZ_TEXT_FILE     = TEST_DATA_DIR + "lorem_ipsum.txt.xz"
+  XZ_ISO_TEXT_FILE = TEST_DATA_DIR + "iso88591.txt.xz"
 
   def test_new
     File.open(XZ_TEXT_FILE) do |file|
@@ -157,6 +158,86 @@ class StreamReaderTest < Minitest::Test
       reader.rewind
       assert_equal(text, reader.read(10))
     end
+  end
+
+  def test_encodings
+    enc1 = Encoding.default_external
+    enc2 = Encoding.default_internal
+    begin
+      Encoding.default_external = Encoding::ISO_8859_1
+
+      # Forced binary read must always yield BINARY
+      XZ::StreamReader.open(XZ_ISO_TEXT_FILE) do |reader|
+        str = reader.read(255)
+        assert_equal Encoding::BINARY, str.encoding
+      end
+
+      # Now the external encoding needs to be detected
+      XZ::StreamReader.open(XZ_ISO_TEXT_FILE) do |reader|
+        str = reader.read
+        assert_equal Encoding::ISO_8859_1, str.encoding
+        assert str.valid_encoding?
+      end
+
+      # Request transcode
+      XZ::StreamReader.open(XZ_ISO_TEXT_FILE, external_encoding: "ISO-8859-1", internal_encoding: "UTF-8") do |reader|
+        str = reader.read
+        assert_equal Encoding::UTF_8, str.encoding
+        assert str.valid_encoding?
+      end
+
+      # Request transcode via default internal encoding
+      Encoding.default_internal = Encoding::UTF_8
+      XZ::StreamReader.open(XZ_ISO_TEXT_FILE) do |reader|
+        str = reader.read
+        assert_equal Encoding::UTF_8, str.encoding
+        assert str.valid_encoding?
+      end
+
+      # Ensure getc does what it should when asked for multibyte chars
+      XZ::StreamReader.open(XZ_ISO_TEXT_FILE) do |reader|
+        assert_equal "B", reader.getc
+        assert_equal "ä", reader.getc
+        assert_equal "r", reader.getc
+      end
+    ensure
+      # Reset to normal for further tests
+      Encoding.default_external = enc1
+      Encoding.default_internal = enc2
+    end
+  end
+
+  def test_set_encoding
+    reader = XZ::StreamReader.open(XZ_ISO_TEXT_FILE)
+
+    reader.set_encoding "UTF-8"
+    assert_equal Encoding::UTF_8, reader.external_encoding
+    assert_equal nil, reader.internal_encoding
+
+    reader.set_encoding "ISO-8859-1:UTF-8"
+    assert_equal Encoding::ISO_8859_1, reader.external_encoding
+    assert_equal Encoding::UTF_8, reader.internal_encoding
+
+    reader.set_encoding Encoding::UTF_8
+    assert_equal Encoding::UTF_8, reader.external_encoding
+    assert_equal nil, reader.internal_encoding
+
+    reader.set_encoding Encoding::UTF_8, Encoding::ISO_8859_1
+    assert_equal Encoding::UTF_8, reader.external_encoding
+    assert_equal Encoding::ISO_8859_1, reader.internal_encoding
+
+    reader.set_encoding "ISO-8859-1", {:invalid => :replace, :replace => "?"}
+    assert_equal Encoding::ISO_8859_1, reader.external_encoding
+    assert_equal nil, reader.internal_encoding
+
+    reader.set_encoding "ISO-8859-1", "UTF-8", {:invalid => :replace, :replace => "?"}
+    assert_equal Encoding::ISO_8859_1, reader.external_encoding
+    assert_equal Encoding::UTF_8, reader.internal_encoding
+
+    reader.set_encoding "ISO-8859-1:UTF-8", {:invalid => :replace, :replace => "?"}
+    assert_equal Encoding::ISO_8859_1, reader.external_encoding
+    assert_equal Encoding::UTF_8, reader.internal_encoding
+
   end
 
 end
