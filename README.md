@@ -32,7 +32,7 @@ Alternatively, you can clone the repository and build the most recent
 code yourself:
 
 ```
-$ git clone git://github.com/Quintus/ruby-xz.git
+$ git clone git://git.guelker.eu/ruby-xz.git
 $ cd ruby-xz
 $ rake gem
 $ gem install pkg/ruby-xz-*.gem
