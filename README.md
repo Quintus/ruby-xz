@@ -16,10 +16,8 @@ of that, ruby-xz offers an advanced interface that allows you to treat
 XZ-compressed data as IO streams, both for reading and for writing. See the
 XZ::StreamReader and XZ::StreamWriter classes for more information on this.
 
-**Note**: Version 1.0.0 breaks the API of the XZ::StreamReader and
-XZ::StreamWriter classes. If you used them, you will need to adapt
-your code. The API now behaves like Ruby's own zlib library does.
-See the HISTORY.rdoc file for a list of breaking changes.
+**Note**: Version 1.0.0 breaks the API quite heavily. Refer to
+HISTORY.rdoc for details.
 
 Installation
 ------------
@@ -105,9 +103,10 @@ end
 Links
 -----
 
-* Code repository: https://github.com/Quintus/ruby-xz
+* Website: https://mg.guelker.eu/projects/ruby-xz/
+* Online documentation: https://mg.guelker.eu/projects/ruby-xz/doc
+* Code repository: https://git.guelker.eu/?p=ruby-xz.git;a=summary
 * Issue tracker: https://github.com/Quintus/ruby-xz/issues
-* Online documentation: http://quintus.github.io/ruby-xz
 
 License
 -------
@@ -115,5 +114,5 @@ License
 MIT license; see LICENSE for the full license text.
 
 [1]: http://tukaani.org/xz/
-[2]: http://quintus.github.io/ruby-xz
+[2]: https://mg.guelker.eu/projects/ruby-xz/doc
 [3]: https://github.com/halostatue/minitar
