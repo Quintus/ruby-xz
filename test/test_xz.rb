@@ -36,6 +36,16 @@ class TestXZ < Minitest::Test
 
   def test_decompress
     assert_equal(XZ.decompress(TEST_XZ), '01234567890123456789')
+    assert_equal(Encoding.default_external, XZ.decompress(TEST_XZ).encoding)
+
+    str = XZ.decompress(TEST_XZ, external_encoding: "ISO-8859-1")
+    assert_equal Encoding::ISO_8859_1, str.encoding
+
+    str = XZ.decompress(TEST_XZ, external_encoding: "ISO-8859-1", internal_encoding: "UTF-16LE")
+    assert_equal Encoding::UTF_16LE, str.encoding
+
+    # Must specify an external encoding if transcoding is requested
+    assert_raises(ArgumentError){XZ.decompress(TEST_XZ, internal_encoding: "UTF-8")}
   end
 
   def test_corrupt_archive

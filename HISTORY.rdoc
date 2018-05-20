@@ -5,6 +5,9 @@
 * *BreakingChange* The XZ module's methods now take any parameters
   beyond the IO object as real Ruby keyword arguments rather than
   a long argument list.
+* *BreakingChange* XZ.decompress_stream now honours Ruby's
+  external and internal encoding concept instead of just
+  returning BINARY-tagged strings.
 * *BreakingChange* Remove deprecated API on stream reader/writer
   class and instead sync the API with Ruby's zlib library
   (Ticket #12 by me).

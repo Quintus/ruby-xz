@@ -79,9 +79,11 @@ module XZ
     # ==== Positional parameters
     #
     # [io]
-    #   The IO to read from. It must be opened for reading.
+    #   The IO to read from. It must be opened for reading in
+    #   binary mode.
     # [chunk (Block argument)]
-    #   One piece of decompressed data.
+    #   One piece of decompressed data. See Remarks section below
+    #   for information about its encoding.
     #
     # ==== Keyword arguments
     #
@@ -101,12 +103,31 @@ module XZ
     #     has an unsupported checksum type.
     #   [:concatenated]
     #     Decompress concatenated archives.
+    # [external_encoding (Encoding.default_external)]
+    #   Assume the decompressed data inside the compressed data
+    #   has this encoding. See Remarks section.
+    # [internal_encoding (Encoding.default_internal)]
+    #   Request transcoding of the decompressed data into this
+    #   encoding if not nil. Note that Encoding.default_internal
+    #   is nil by default. See Remarks section.
     #
     # === Return value
     #
     # If a block was given, returns the number of bytes
     # written. Otherwise, returns the decompressed data as a
     # BINARY-encoded string.
+    #
+    # === Raises
+    #
+    # [Encoding::InvalidByteSequenceError]
+    #   1. You requested an “internal encoding” conversion
+    #      and the archive contains invalid byte sequences
+    #      in the external encoding.
+    #   2. You requested an “internal encoding” conversion, used
+    #      the block form of this method, and liblzma decided
+    #      to cut the decompressed data into chunks in mid of
+    #      a multibyte character. See Remarks section for an
+    #      explanation.
     #
     # === Example
     #
@@ -127,8 +148,52 @@ module XZ
     # know how big your data gets or if you want to decompress much
     # data, use the block form. Of course you shouldn't store the data
     # you read in RAM then as in the example above.
-    def decompress_stream(io, memory_limit: LibLZMA::UINT64_MAX, flags: [:tell_unsupported_check], &block)
+    #
+    # This method honours Ruby's external and internal encoding concept.
+    # All documentation about this applies to this method, with the
+    # exception that the external encoding does not refer to the data
+    # on the hard disk (that's compressed XZ data, it's always binary),
+    # but to the data inside the XZ container, i.e. to the *decompressed*
+    # data. Any strings you receive from this method (regardless of
+    # whether via return value or via the +chunk+ block argument) will
+    # first be tagged with the external encoding. If you set an internal
+    # encoding (either via the +internal_encoding+ parameter or via
+    # Ruby's default internal encoding) that string will be transcoded
+    # from the external encoding to the internal encoding before you
+    # even see it; in that case, the return value or chunk block argument
+    # will be encoded in the internal encoding. Internal encoding is
+    # disabled in Ruby by default and the argument for this method also
+    # defaults to nil.
+    #
+    # Due to the external encoding being applied, it can happen that
+    # +chunk+ contains an incomplete multibyte character causing
+    # <tt>valid_encoding?</tt> to return false if called on +chunk+,
+    # because liblzma doesn't know about encodings. The rest of the
+    # character will be yielded to the block in the next iteration
+    # then as liblzma progresses with the decompression from the XZ
+    # format. IOW, be prepared that +chunk+ can contain incomplete
+    # multibyte chars.
+    #
+    # This can have nasty side effects if you requested an internal
+    # encoding automatic transcoding and used the block form. Since
+    # this method applies the internal encoding transcoding before the
+    # chunk is yielded to the block, String#encode gets the incomplete
+    # multibyte character. In that case, you will receive an
+    # Encoding::InvalidByteSequenceError exception even though your
+    # data is perfectly well-formed inside the XZ data. It's just
+    # that liblzma during decompression cut the chunks at an
+    # unfortunate place. To avoid this, do not request internal encoding
+    # conversion when using the block form, but instead transcode
+    # the data manually after you have decompressed the entire data.
+    def decompress_stream(io, memory_limit: LibLZMA::UINT64_MAX, flags: [:tell_unsupported_check], external_encoding: nil, internal_encoding: nil, &block)
       raise(ArgumentError, "Invalid memory limit set!") unless memory_limit > 0 && memory_limit <= LibLZMA::UINT64_MAX
+      raise(ArgumentError, "external_encoding must be set if internal_encoding transcoding is requested") if internal_encoding && !external_encoding
+
+      # The ArgumentError above is only about the concrete arguments
+      # (to sync with Ruby's IO API), not about the implied internal
+      # encoding, which might still kick in (and does, see below).
+      external_encoding ||= Encoding.default_external
+      internal_encoding ||= Encoding.default_internal
 
       # bit-or all flags
       allflags = flags.inject(0) do |val, flag|
@@ -147,9 +212,16 @@ module XZ
       res = ""
       res.encode!(Encoding::BINARY)
       if block_given?
-        res = lzma_code(io, stream, &block)
+        res = lzma_code(io, stream) do |chunk|
+          chunk = chunk.dup # Do not write somewhere into the fiddle pointer while encoding (-> can segfault)
+          chunk.force_encoding(external_encoding) if external_encoding
+          chunk.encode!(internal_encoding)        if internal_encoding
+          yield(chunk)
+        end
       else
         lzma_code(io, stream){|chunk| res << chunk}
+        res.force_encoding(external_encoding) if external_encoding
+        res.encode!(internal_encoding)        if internal_encoding
       end
 
       LibLZMA.lzma_end(stream.to_ptr)
@@ -173,7 +245,8 @@ module XZ
     #   The IO to read the data from. Must be opened for
     #   reading.
     # [chunk (Block argument)]
-    #   One piece of compressed data.
+    #   One piece of compressed data. This is always tagged
+    #   as a BINARY string, since it's compressed binary data.
     #
     # ==== Keyword arguments
     # All keyword arguments are optional.
@@ -222,6 +295,12 @@ module XZ
     # know how big your data gets or if you want to compress much
     # data, use the block form. Of course you shouldn't store the data
     # your read in RAM then as in the example above.
+    #
+    # For the +io+ object passed Ruby's normal external and internal
+    # encoding rules apply while it is read from by this method. These
+    # encodings are not changed on +io+ by this method. The data you
+    # receive in the block (+chunk+) above is binary data (compressed
+    # data) and as such encoded as BINARY.
     def compress_stream(io, level: 6, check: :crc64, extreme: false, &block)
       raise(ArgumentError, "Invalid compression level!") unless (0..9).include?(level)
       raise(ArgumentError, "Invalid checksum specified!") unless [:none, :crc32, :crc64, :sha256].include?(check)
@@ -332,6 +411,9 @@ module XZ
     #
     # Don't use this method for big amounts of data--you may run out
     # of memory. Use decompress_file or decompress_stream instead.
+    #
+    # Read #decompress_file's Remarks section for notes on the
+    # return value's encoding.
     def decompress(str, **args)
       s = StringIO.new(str)
       decompress_stream(s, **args)
@@ -366,7 +448,7 @@ module XZ
     def decompress_file(in_file, out_file, **args)
       File.open(in_file, "rb") do |i_file|
         File.open(out_file, "wb") do |o_file|
-          decompress_stream(i_file, **args) do |chunk|
+          decompress_stream(i_file, internal_encoding: nil, external_encoding: Encoding::BINARY, **args) do |chunk|
             o_file.write(chunk)
           end
         end
