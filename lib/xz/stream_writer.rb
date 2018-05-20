@@ -201,6 +201,8 @@ class XZ::StreamWriter < XZ::Stream
     @level    = compression_level
     @options  = options.freeze
 
+    @level |= LibLZMA::LZMA_PRESET_EXTREME if @options[:extreme]
+
     res = XZ::LibLZMA.lzma_easy_encoder(@lzma_stream.to_ptr,
                                     @level,
                                     XZ::LibLZMA.const_get(:"LZMA_CHECK_#{options[:check].upcase}"))
