@@ -113,6 +113,6 @@ License
 
 MIT license; see LICENSE for the full license text.
 
-[1]: http://tukaani.org/xz/
+[1]: https://tukaani.org/xz/
 [2]: https://mg.guelker.eu/projects/ruby-xz/doc
 [3]: https://github.com/halostatue/minitar
