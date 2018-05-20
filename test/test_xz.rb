@@ -62,13 +62,13 @@ class TestXZ < Minitest::Test
 
     0.upto(9) do |i|
       [true, false].each do |extreme|
-        compressed = XZ.compress(str, i, :crc64, extreme)
+        compressed = XZ.compress(str, level: i, extreme: extreme)
         assert_equal(XZ.decompress(compressed), str)
       end
     end
 
     # Maximum compression level is 9.
-    assert_raises(ArgumentError){XZ.compress("foo", 15)}
+    assert_raises(ArgumentError){XZ.compress("foo", level: 15)}
   end
 
   def test_roundtrip

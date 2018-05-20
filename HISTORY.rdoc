@@ -2,6 +2,9 @@
 
 == 1.0.0 (???)
 
+* *BreakingChange* The XZ module's methods now take any parameters
+  beyond the IO object as real Ruby keyword arguments rather than
+  a long argument list.
 * *BreakingChange* Remove deprecated API on stream reader/writer
   class and instead sync the API with Ruby's zlib library
   (Ticket #12 by me).

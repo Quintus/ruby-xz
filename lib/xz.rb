@@ -68,17 +68,22 @@ module XZ
     end
 
     # call-seq:
-    #   decompress_stream(io [, memory_limit [, flags ] ] )               → a_string
-    #   decompress_stream(io [, memory_limit [, flags ] ] ){|chunk| ... } → an_integer
-    #   decode_stream(io [, memory_limit [, flags ] ] )                   → a_string
-    #   decode_stream(io [, memory_limit [, flags ] ] ){|chunk| ... }     → an_integer
+    #   decompress_stream(io [, kw ] )                 → a_string
+    #   decompress_stream(io [, kw ] ] ){|chunk| ... } → an_integer
+    #   decode_stream(io [, kw ] ] )                   → a_string
+    #   decode_stream(io [, kw ] ){|chunk| ... }       → an_integer
     #
     # Decompresses a stream containing XZ-compressed data.
     #
     # === Parameters
+    # ==== Positional parameters
     #
     # [io]
     #   The IO to read from. It must be opened for reading.
+    # [chunk (Block argument)]
+    #   One piece of decompressed data.
+    #
+    # ==== Keyword arguments
     #
     # [memory_limit (+UINT64_MAX+)]
     #   If not XZ::LibLZMA::UINT64_MAX, makes liblzma
@@ -96,9 +101,6 @@ module XZ
     #     has an unsupported checksum type.
     #   [:concatenated]
     #     Decompress concatenated archives.
-    #
-    # [chunk (Block argument)]
-    #   One piece of decompressed data.
     #
     # === Return value
     #
@@ -125,7 +127,7 @@ module XZ
     # know how big your data gets or if you want to decompress much
     # data, use the block form. Of course you shouldn't store the data
     # you read in RAM then as in the example above.
-    def decompress_stream(io, memory_limit = LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check], &block)
+    def decompress_stream(io, memory_limit: LibLZMA::UINT64_MAX, flags: [:tell_unsupported_check], &block)
       raise(ArgumentError, "Invalid memory limit set!") unless memory_limit > 0 && memory_limit <= LibLZMA::UINT64_MAX
 
       # bit-or all flags
@@ -157,20 +159,26 @@ module XZ
     alias decode_stream decompress_stream
 
     # call-seq:
-    #   compress_stream(io [, compression_level [, check [, extreme ] ] ] ) → a_string
-    #   compress_stream(io [, compression_level [, check [, extreme ] ] ] ){|chunk| ... } → an_integer
-    #   encode_stream(io [, compression_level [, check [, extreme ] ] ] ) → a_string
-    #   encode_stream(io [, compression_level [, check [, extreme ] ] ] ){|chunk| ... } → an_integer
+    #   compress_stream(io [, kw ] ) → a_string
+    #   compress_stream(io [, kw ] ){|chunk| ... } → an_integer
+    #   encode_stream(io [, kw ] ) → a_string
+    #   encode_stream(io [, kw ] ){|chunk| ... } → an_integer
     #
     # Compresses a stream of data into XZ-compressed data.
     #
     # === Parameters
+    # ==== Positional arguments
     #
     # [io]
     #   The IO to read the data from. Must be opened for
     #   reading.
+    # [chunk (Block argument)]
+    #   One piece of compressed data.
     #
-    # [compression_level (6)]
+    # ==== Keyword arguments
+    # All keyword arguments are optional.
+    #
+    # [level (6)]
     #   Compression strength. Higher values indicate a
     #   smaller result, but longer compression time. Maximum
     #   is 9.
@@ -188,9 +196,6 @@ module XZ
     #   compression. This may succeed, but you can end
     #   up with *very* long computation times.
     #
-    # [chunk (Block argument)]
-    #   One piece of compressed data.
-    #
     # === Return value
     #
     # If a block was given, returns the number of bytes
@@ -205,7 +210,9 @@ module XZ
     #   i.rewind
     #   str = ""
     #
-    #   XZ.compress_stream(i, 4, :sha256){|c| str << c} #=> 123
+    #   XZ.compress_stream(i, level: 4, check: :sha256) do |c|
+    #     str << c
+    #   end #=> 123
     #   str #=> Some binary blob
     #
     # === Remarks
@@ -215,16 +222,16 @@ module XZ
     # know how big your data gets or if you want to compress much
     # data, use the block form. Of course you shouldn't store the data
     # your read in RAM then as in the example above.
-    def compress_stream(io, compression_level = 6, check = :crc64, extreme = false, &block)
-      raise(ArgumentError, "Invalid compression level!") unless (0..9).include?(compression_level)
+    def compress_stream(io, level: 6, check: :crc64, extreme: false, &block)
+      raise(ArgumentError, "Invalid compression level!") unless (0..9).include?(level)
       raise(ArgumentError, "Invalid checksum specified!") unless [:none, :crc32, :crc64, :sha256].include?(check)
 
-      compression_level |= LibLZMA::LZMA_PRESET_EXTREME if extreme
+      level |= LibLZMA::LZMA_PRESET_EXTREME if extreme
 
       stream = LibLZMA::LZMAStream.malloc
       LibLZMA::LZMA_STREAM_INIT(stream)
       res = LibLZMA.lzma_easy_encoder(stream.to_ptr,
-                                      compression_level,
+                                      level,
                                       LibLZMA.const_get(:"LZMA_CHECK_#{check.upcase}"))
 
       LZMAError.raise_if_necessary(res)
@@ -253,7 +260,7 @@ module XZ
     #   The path of the file to write to. If it exists, it will be
     #   overwritten.
     #
-    # For the other parameters, see the ::compress_stream method.
+    # For the keyword parameters, see the ::compress_stream method.
     #
     # === Return value
     #
@@ -268,10 +275,10 @@ module XZ
     #
     # This method is safe to use with big files, because files are not
     # loaded into memory completely at once.
-    def compress_file(in_file, out_file, compression_level = 6, check = :crc64, extreme = false)
+    def compress_file(in_file, out_file, **args)
       File.open(in_file, "rb") do |i_file|
         File.open(out_file, "wb") do |o_file|
-          compress_stream(i_file, compression_level, check, extreme) do |chunk|
+          compress_stream(i_file, **args) do |chunk|
             o_file.write(chunk)
           end
         end
@@ -284,7 +291,7 @@ module XZ
     #
     # [str] The data to compress.
     #
-    # For the other parameters, see the compress_stream method.
+    # For the keyword parameters, see the #compress_stream method.
     #
     # === Return value
     #
@@ -299,9 +306,9 @@ module XZ
     #
     # Don't use this method for big amounts of data--you may run out
     # of memory. Use compress_file or compress_stream instead.
-    def compress(str, compression_level = 6, check = :crc64, extreme = false)
+    def compress(str, **args)
       s = StringIO.new(str)
-      compress_stream(s, compression_level, check, extreme)
+      compress_stream(s, **args)
     end
 
     # Decompresses data in XZ format.
@@ -310,7 +317,7 @@ module XZ
     #
     # [str] The data to decompress.
     #
-    # For the other parameters, see the decompress_stream method.
+    # For the keyword parameters, see the decompress_stream method.
     #
     # === Return value
     #
@@ -325,9 +332,9 @@ module XZ
     #
     # Don't use this method for big amounts of data--you may run out
     # of memory. Use decompress_file or decompress_stream instead.
-    def decompress(str, memory_limit = LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check])
+    def decompress(str, **args)
       s = StringIO.new(str)
-      decompress_stream(s, memory_limit, flags)
+      decompress_stream(s, **args)
     end
 
     # Decompresses +in_file+ and writes the result to +out_file+.
@@ -340,7 +347,7 @@ module XZ
     #   The path of the file to write to. If it exists, it will
     #   be overwritten.
     #
-    # For the other parameters, see the decompress_stream method.
+    # For the keyword parameters, see the decompress_stream method.
     #
     # === Return value
     #
@@ -356,10 +363,10 @@ module XZ
     #
     # This method is safe to use with big files, because files are not
     # loaded into memory completely at once.
-    def decompress_file(in_file, out_file, memory_limit = LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check])
+    def decompress_file(in_file, out_file, **args)
       File.open(in_file, "rb") do |i_file|
         File.open(out_file, "wb") do |o_file|
-          decompress_stream(i_file, memory_limit, flags) do |chunk|
+          decompress_stream(i_file, **args) do |chunk|
             o_file.write(chunk)
           end
         end
