@@ -28,7 +28,7 @@
 require "pathname"
 require "fiddle"
 require "fiddle/import"
-require 'stringio'
+require "stringio"
 require "forwardable"
 
 # The namespace and main module of this library. Each method of this
@@ -300,7 +300,6 @@ module XZ
     # Don't use this method for big amounts of data--you may run out
     # of memory. Use compress_file or compress_stream instead.
     def compress(str, compression_level = 6, check = :crc64, extreme = false)
-      raise(NotImplementedError, "StringIO isn't available!") unless defined? StringIO
       s = StringIO.new(str)
       compress_stream(s, compression_level, check, extreme)
     end
@@ -327,7 +326,6 @@ module XZ
     # Don't use this method for big amounts of data--you may run out
     # of memory. Use decompress_file or decompress_stream instead.
     def decompress(str, memory_limit = LibLZMA::UINT64_MAX, flags = [:tell_unsupported_check])
-      raise(NotImplementedError, "StringIO isn't available!") unless defined? StringIO
       s = StringIO.new(str)
       decompress_stream(s, memory_limit, flags)
     end
