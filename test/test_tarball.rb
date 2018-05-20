@@ -26,7 +26,7 @@
 #++
 
 require "minitar"
-require_relative "./common"
+require_relative "common"
 
 # Create XZ-compressed tarballs and unpack them with the system's
 # tar(1) utility, and vice-versa. This ensures our library interacts

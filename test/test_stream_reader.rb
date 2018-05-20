@@ -25,7 +25,7 @@
 # THE SOFTWARE.
 #++
 
-require File.join(File.expand_path(File.dirname(__FILE__)), 'common')
+require_relative "common"
 
 class StreamReaderTest < Minitest::Test
 

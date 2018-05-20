@@ -25,7 +25,7 @@
 # THE SOFTWARE.
 #++
 
-require_relative "./common"
+require_relative "common"
 
 class TestXZ < Minitest::Test
 

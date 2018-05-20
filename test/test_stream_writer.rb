@@ -25,7 +25,7 @@
 # THE SOFTWARE.
 #++
 
-require_relative "./common"
+require_relative "common"
 
 # For this testcase, please note that it isn’t possible to check
 # whether the compressed string is equal to some other
