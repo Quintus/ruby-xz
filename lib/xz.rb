@@ -164,8 +164,8 @@ module XZ
     # because liblzma doesn't know about encodings. The rest of the
     # character will be yielded to the block in the next iteration
     # then as liblzma progresses with the decompression from the XZ
-    # format. IOW, be prepared that +chunk+ can contain incomplete
-    # multibyte chars.
+    # format. In other words, be prepared that +chunk+ can contain
+    # incomplete multibyte chars.
     #
     # This can have nasty side effects if you requested an internal
     # encoding automatic transcoding and used the block form. Since
@@ -405,7 +405,7 @@ module XZ
     # Don't use this method for big amounts of data--you may run out
     # of memory. Use decompress_file or decompress_stream instead.
     #
-    # Read #decompress_file's Remarks section for notes on the
+    # Read #decompress_stream's Remarks section for notes on the
     # return value's encoding.
     def decompress(str, **args)
       s = StringIO.new(str)
