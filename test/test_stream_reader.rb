@@ -163,6 +163,11 @@ class StreamReaderTest < Minitest::Test
   def test_encodings
     enc1 = Encoding.default_external
     enc2 = Encoding.default_internal
+    verb = $VERBOSE
+    $VERBOSE = nil # Disable warnings, because setting
+    # Encoding.default_{internal,external} generates a
+    # warning. However, setting these is required to test
+    # if they're properly honoured by ruby-xz.
     begin
       Encoding.default_external = Encoding::ISO_8859_1
 
@@ -204,6 +209,7 @@ class StreamReaderTest < Minitest::Test
       # Reset to normal for further tests
       Encoding.default_external = enc1
       Encoding.default_internal = enc2
+      $VERBOSE = verb
     end
   end
 

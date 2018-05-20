@@ -25,7 +25,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =end
 
-require "rake"
+require "rake/testtask"
 require "rubygems/package_task"
 require "rdoc/task"
 
@@ -41,10 +41,7 @@ Rake::RDocTask.new do |rd|
   rd.rdoc_dir = "doc"
 end
 
-desc "Runs the tests."
-task :test do
-  cd "test"
-  Dir["test_*.rb"].each do |filename|
-    ruby filename
-  end
+Rake::TestTask.new do |t|
+  t.test_files = FileList["test/test_*.rb"]
+  t.warning = true
 end

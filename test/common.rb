@@ -30,3 +30,6 @@ require_relative "../lib/xz"
 require "pathname"
 require "tempfile"
 require "minitest/autorun"
+
+# This is the absolute path to the test/ directory.
+TEST_DIR = Pathname.new(__FILE__).dirname

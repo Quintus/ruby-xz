@@ -34,11 +34,13 @@ require_relative "common"
 class TarballTest < Minitest::Test
 
   def test_pack_tarball
-    filename = File.join(Dir.pwd, "testtarball.tar.xz")
-    content  = File.read("test-data/lorem_ipsum.txt")
+    filename = TEST_DIR + "testtarball.tar.xz"
+    content  = File.read(TEST_DIR + "test-data/lorem_ipsum.txt")
 
     XZ::StreamWriter.open(filename) do |txz|
-      Minitar.pack("test-data/lorem_ipsum.txt", txz)
+      Dir.chdir(TEST_DIR) do # proper file path parts
+        Minitar.pack("test-data/lorem_ipsum.txt", txz)
+      end
     end
 
     Dir.mktmpdir("testtarball") do |dir|
@@ -53,10 +55,12 @@ class TarballTest < Minitest::Test
   end
 
   def test_unpack_tarball
-    filename = File.join(Dir.pwd, "testtarball.tar.xz")
-    content  = File.read("test-data/lorem_ipsum.txt")
+    filename = TEST_DIR + "testtarball.tar.xz"
+    content  = File.read(TEST_DIR + "test-data/lorem_ipsum.txt")
 
-    system("tar -cJf '#{filename}' test-data/lorem_ipsum.txt")
+    Dir.chdir(TEST_DIR) do # proper file path parts
+      system("tar -cJf '#{filename}' test-data/lorem_ipsum.txt")
+    end
 
     Dir.mktmpdir("testtarball") do |dir|
       Dir.chdir(dir) do
