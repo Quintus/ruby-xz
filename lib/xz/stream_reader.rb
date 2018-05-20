@@ -171,6 +171,7 @@ class XZ::StreamReader < XZ::Stream
     options[:memory_limit] ||= XZ::LibLZMA::UINT64_MAX
     options[:flags] ||= [:tell_unsupported_check]
     raise(ArgumentError, "When specifying the internal encoding, the external encoding must also be specified") if options[:internal_encoding] && !options[:external_encoding]
+    raise(ArgumentError, "Invalid memory limit set!") unless options[:memory_limit] > 0 && options[:memory_limit] <= XZ::LibLZMA::UINT64_MAX
 
     @options = options.freeze
     @readbuf = String.new

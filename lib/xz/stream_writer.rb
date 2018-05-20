@@ -196,6 +196,9 @@ class XZ::StreamWriter < XZ::Stream
     options[:check]   ||= :crc64
     options[:extreme] ||= false
 
+    raise(ArgumentError, "Invalid compression level!")  unless (0..9).include?(compression_level)
+    raise(ArgumentError, "Invalid checksum specified!") unless [:none, :crc32, :crc64, :sha256].include?(options[:check])
+
     set_encoding(options[:external_encoding]) if options[:external_encoding]
 
     @level    = compression_level
