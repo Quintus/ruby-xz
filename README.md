@@ -5,11 +5,11 @@ ruby-xz
 best known for the extreme compression-ratio it's native *XZ* format
 achieves. ruby-xz gives you the possibility of creating and extracting
 XZ archives on any platform where liblzma is installed. No compilation
-is needed, because ruby-xz is written on top of Ruby's fiddle library
+is needed, because ruby-xz is written on top of Ruby's “fiddle” library
 (part of the standard libary). ruby-xz does not have any dependencies
 other than Ruby itself.
 
-ruby-xz supports both "intuitive" (de)compression by providing methods to
+ruby-xz supports both “intuitive” (de)compression by providing methods to
 directly operate on strings and files, but also allows you to operate
 directly on IO streams (see the various methods of the XZ module). On top
 of that, ruby-xz offers an advanced interface that allows you to treat
