@@ -41,14 +41,15 @@ DESCRIPTION
   spec.author                = "Marvin Gülker"
   spec.email                 = "m-guelker@phoenixmail.de"
   spec.license               = "MIT"
-  spec.homepage              = "http://quintus.github.io/ruby-xz"
+  spec.homepage              = "https://mg.guelker.eu/projects/ruby-xz/"
   spec.platform              = Gem::Platform::RUBY
   spec.required_ruby_version = ">=2.3.0"
   spec.add_development_dependency("minitar", "~> 0.6")
   spec.files.concat(Dir["lib/**/*.rb"])
   spec.files.concat(Dir["**/*.rdoc"])
-  spec.files << "COPYING" << "AUTHORS"
+  spec.files << "README.md" << "LICENSE" << "AUTHORS"
   spec.has_rdoc         = true
   spec.extra_rdoc_files = %w[README.md HISTORY.rdoc LICENSE AUTHORS]
   spec.rdoc_options << "-t" << "ruby-xz RDocs" << "-m" << "README.md"
+  spec.post_install_message = "Version 1.0.0 of ruby-xz breaks the API. Read HISTORY.rdoc and adapt your code to the new API."
 end
