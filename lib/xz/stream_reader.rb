@@ -39,10 +39,6 @@
 # using Ruby's File class internally. If you use ::open's block form,
 # the method will take care of properly closing both the liblzma
 # stream and the File instance correctly.
-#
-# Note that anything read from a StreamReader instance will *always* be
-# tagged with the BINARY encoding. If that isn't what you want, you
-# will need to call String#force_encoding on your received data.
 class XZ::StreamReader < XZ::Stream
 
   # Decompression options.
@@ -133,11 +129,24 @@ class XZ::StreamReader < XZ::Stream
   #       has an unsupported checksum type.
   #     [:concatenated]
   #       Decompress concatenated archives.
+  #   [:external_encoding (Encoding.default_external)]
+  #     Assume the decompressed data inside the XZ is encoded in
+  #     this encoding. Defaults to Encoding.default_external,
+  #     which in turn defaults to the environment.
+  #   [:internal_encoding (Encoding.default_internal)]
+  #     Request that the data found in the XZ file (which is assumed
+  #     to be in the encoding specified by +external_encoding+) to
+  #     be transcoded into this encoding. Defaults to Encoding.default_internal,
+  #     which defaults to nil, which means to not transcode anything.
   #
   # === Return value
   # The newly created instance.
   #
   # === Remarks
+  # The strings returned from the reader will be in the encoding specified
+  # by the +internal_encoding+ parameter. If that parameter is nil (default),
+  # then they will be in the encoding specified by +external_encoding+.
+  #
   # This method used to accept a block in earlier versions. Since version 1.0.0,
   # this behaviour has been removed to synchronise the API with Ruby's own
   # GzipReader.open.
@@ -161,9 +170,18 @@ class XZ::StreamReader < XZ::Stream
     super(delegate_io)
     options[:memory_limit] ||= XZ::LibLZMA::UINT64_MAX
     options[:flags] ||= [:tell_unsupported_check]
+    raise(ArgumentError, "When specifying the internal encoding, the external encoding must also be specified") if options[:internal_encoding] && !options[:external_encoding]
 
     @options = options.freeze
     @readbuf = String.new
+    @readbuf.force_encoding(Encoding::BINARY)
+
+    if options[:external_encoding]
+      encargs = []
+      encargs << options[:external_encoding]
+      encargs << options[:internal_encoding] if options[:internal_encoding]
+      set_encoding(*encargs)
+    end
 
     @allflags = options[:flags].reduce(0) do |val, flag|
       flag = XZ::LibLZMA::LZMA_DECODE_FLAGS[flag] || raise(ArgumentError, "Unknown flag #{flag}")
@@ -184,12 +202,13 @@ class XZ::StreamReader < XZ::Stream
   #
   # Return values are as per IO#read.
   def read(length = nil, outbuf = String.new)
-    return "" if length == 0 # Shortcut; retval as per IO#read.
+    return "".force_encoding(Encoding::BINARY) if length == 0 # Shortcut; retval as per IO#read.
 
     # Note: Querying the underlying IO as early as possible allows to
     # have Ruby's own IO exceptions to bubble up.
     if length
       return nil if eof? # In line with IO#read
+      outbuf.force_encoding(Encoding::BINARY) # As per IO#read docs
 
       # The user's request is in decompressed bytes, so it doesn't matter
       # how much is actually read from the compressed file.
@@ -224,8 +243,24 @@ class XZ::StreamReader < XZ::Stream
       end
 
       @pos += @readbuf.bytesize
+
+      # Apply encoding conversion.
+      # First, tag the read data with the external encoding.
+      @readbuf.force_encoding(@external_encoding)
+
+      # Now, transcode it to the internal encoding if that was requested.
+      # Otherwise return it with the external encoding as-is.
+      if @internal_encoding
+        @readbuf.encode!(@internal_encoding, @transcode_options)
+        outbuf.force_encoding(@internal_encoding)
+      else
+        outbuf.force_encoding(@external_encoding)
+      end
+
       outbuf.replace(@readbuf)
       @readbuf.clear
+      @readbuf.force_encoding(Encoding::BINARY) # Back to binary mode for further reading
+
       return outbuf
     end
   end
@@ -268,14 +303,6 @@ class XZ::StreamReader < XZ::Stream
   # 2. liblzma has returned everything it could make out of that.
   def eof?
     @delegate_io.eof? && @readbuf.empty?
-  end
-
-  def external_encoding
-    Encoding::BINARY
-  end
-
-  def internal_encoding
-    Encoding::BINARY
   end
 
   # Human-readable description

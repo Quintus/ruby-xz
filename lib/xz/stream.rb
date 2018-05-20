@@ -42,6 +42,20 @@
 # Many methods that are not expressly documented in the RDoc
 # still exist; this class uses Ruby's Forwardable module to forward
 # them to the underlying IO object.
+#
+# Stream and its subclasses honour Ruby's external+internal encoding
+# system just like Ruby's own IO does. All of what the Ruby docs say
+# about external and internal encodings applies to this class with one
+# important difference. The "external encoding" does not refer to the
+# encoding of the file on the hard disk (this file is always a binary
+# file as it's compressed data), but to the encoding of the
+# decompressed data inside the compressed file.
+#
+# As with Ruby's IO class, instances of this class and its subclasses
+# default their external encoding to Encoding.default_external and
+# their internal encoding to Encoding.default_internal. You can use
+# #set_encoding or pass appropriate arguments to the +new+ method to
+# change these encodings per-instance.
 class XZ::Stream
   extend Forwardable
 
@@ -68,6 +82,15 @@ class XZ::Stream
   # Like IO#lineno and IO#lineno=.
   attr_accessor :lineno
 
+  # Returns the encoding used inside the compressed data stream.
+  # Like IO#external_encoding.
+  attr_reader :external_encoding
+
+  # When compressed data is read, the decompressed data is transcoded
+  # from the external_encoding to this encoding. If this encoding is
+  # nil, no transcoding happens.
+  attr_reader :internal_encoding
+
   # Private API only for use by subclasses.
   def initialize(delegate_io) # :nodoc:
     @delegate_io = delegate_io
@@ -77,6 +100,9 @@ class XZ::Stream
     @finished = false
     @lineno = 0
     @pos = 0
+    @external_encoding = Encoding.default_external
+    @internal_encoding = Encoding.default_internal
+    @transcode_options = {}
     @input_buffer_p  = Fiddle::Pointer.malloc(XZ::CHUNK_SIZE)
     @output_buffer_p = Fiddle::Pointer.malloc(XZ::CHUNK_SIZE)
   end
@@ -86,7 +112,7 @@ class XZ::Stream
   # LibLZMA::LZMA_FINISH (this is the last piece).
   def lzma_code(str, action) # :nodoc:
     previous_encoding = str.encoding
-    str.force_encoding("BINARY") # Need to operate on bytes now
+    str.force_encoding(Encoding::BINARY) # Need to operate on bytes now
 
     begin
       pos = 0
@@ -230,6 +256,26 @@ class XZ::Stream
   end
   alias tell pos
 
+  # Like IO#set_encoding.
+  def set_encoding(*args)
+    if args.count < 1 || args.count > 3
+      raise ArgumentError, "Wrong number of arguments: Expected 1-3, got #{args.count}"
+    end
+
+    # Clean `args' to [external_encoding, internal_encoding],
+    # and @transcode_options.
+    return set_encoding($`, $', *args[1..-1]) if args.args[0].to_str =~ /:/
+    @transcode_options = args.delete_at(-1) if args[-1].kind_of?(Hash)
+
+    # `args' is always [external, internal] or [external] at this point
+    @external_encoding = args[0].kind_of?(Encoding) ? args[0] : Encoding.find(args[0])
+    if args[1]
+      @internal_encoding = args[1].kind_of?(Encoding) ? args[1] : Encoding.find(args[1])
+    end
+
+    self
+  end
+
   # Do not define #pos= and #seek, not even to throw NotImplementedError.
   # Reason: The minitar gem thinks it can use this methods then and provokes
   # the NotImplementedError exception.
@@ -257,14 +303,26 @@ class XZ::Stream
     getbyte || raise(EOFError, "End of stream reached")
   end
 
-  # libzlma doesn't provide charset information on the data stored
-  # in compressed format, hence character boundaries cannot usefully
-  # be guessed. If your compressed data contains non-ascii characters,
-  # this method will return partially encoded sequences. Consequently,
-  # you should not use this method when dealing with non-ascii compressed
-  # data. Other than that, it acts like IO#getc.
+  # Like IO#getc.
   def getc
-    read(1)
+    str = String.new
+
+    # Read byte-by-byte until a valid character in the external
+    # encoding was built.
+    loop do
+      str.force_encoding(Encoding::BINARY)
+      str << read(1)
+      str.force_encoding(@external_encoding)
+
+      break if str.valid_encoding?
+    end
+
+    # Transcode to internal encoding if one was requested
+    if @internal_encoding
+      str.encode(@internal_encoding)
+    else
+      str
+    end
   end
 
   # Like IO#readchar.
@@ -283,9 +341,10 @@ class XZ::Stream
       separator = $/
     end
 
-    buf = ""
-    until eof? || (limit && buf.bytesize >= limit)
-      buf << read(1)
+    buf = String.new
+    buf.force_encoding(target_encoding)
+    until eof? || (limit && buf.length >= limit)
+      buf << getc
       return buf if buf[-1] == separator
     end
 
@@ -325,12 +384,11 @@ class XZ::Stream
     end
   end
 
-  # This method is specifically meant for multibyte data.
-  # Since there's no way to know if the compressed data
-  # is multibyte, calling this method causes a
-  # NotImplementedError exception.
+  # Like IO#each_codepoint.
   def each_codepoint
-    raise(NotImplementedError, "Since libzlma does not provide charset information, each_codepoint can't be implemented.")
+    return enum_for __method__ unless block_given?
+
+    each_char{|c| yield(c.ord)}
   end
 
   # Like IO#printf.
@@ -361,10 +419,11 @@ class XZ::Stream
         puts(*obj.to_ary)
       else
         # Don't squeeze multiple subsequent trailing newlines in `obj'
-        if obj.end_with?("\n")
+        obj = obj.to_s
+        if obj.end_with?("\n".encode(obj.encoding))
           write(obj)
         else
-          write(obj.to_s + "\n")
+          write(obj + "\n".encode(obj.encoding))
         end
       end
     end
@@ -390,6 +449,16 @@ class XZ::Stream
   # method always raises NotImplementedError.
   def reopen(*args)
     raise(NotImplementedError, "Can't reopen an lzma stream")
+  end
+
+  private
+
+  def target_encoding
+    if @internal_encoding
+      @internal_encoding
+    else
+      @external_encoding
+    end
   end
 
 end

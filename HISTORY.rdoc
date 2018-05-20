@@ -18,6 +18,8 @@
   methods irritated the minitar gem, which doesn't expect them to
   raise NotImplementedError, but directly to be missing if the object
   does not support seeking.
+* *BreakingChange* StreamReader and StreamWriter now honour Ruby's
+  encoding system instead of returning only BINARY-tagged strings.
 * *Dependency* Remove dependency on ffi. ruby-xz now uses fiddle from
   the stdlib instead.
 * *Dependency* Remove dependency on io-like. ruby-xz now implements

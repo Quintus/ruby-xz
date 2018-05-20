@@ -159,6 +159,10 @@ class XZ::StreamWriter < XZ::Stream
   #     Tries to get the last bit out of the
   #     compression. This may succeed, but you can end
   #     up with *very* long computation times.
+  #   [:external_encoding (Encoding.default_external)]
+  #     Transcode to this encoding when writing. Defaults
+  #     to Encoding.default_external, which by default is
+  #     set from the environment.
   #
   # === Return value
   # Returns the newly created instance.
@@ -192,6 +196,8 @@ class XZ::StreamWriter < XZ::Stream
     options[:check]   ||= :crc64
     options[:extreme] ||= false
 
+    set_encoding(options[:external_encoding]) if options[:external_encoding]
+
     @level    = compression_level
     @options  = options.freeze
 
@@ -210,6 +216,12 @@ class XZ::StreamWriter < XZ::Stream
 
     args.each do |arg|
       @pos += arg.to_s.bytesize
+
+      # Apply external encoding if requested
+      if @external_encoding && @external_encoding != Encoding::BINARY
+        arg = arg.to_s.encode(@external_encoding)
+      end
+
       lzma_code(arg.to_s, XZ::LibLZMA::LZMA_RUN) do |compressed|
         @delegate_io.write(compressed)
       end
@@ -241,14 +253,6 @@ class XZ::StreamWriter < XZ::Stream
     XZ::LZMAError.raise_if_necessary(res)
 
     0 # Mimic IO#rewind's return value
-  end
-
-  def external_encoding
-    nil
-  end
-
-  def internal_encoding
-    nil
   end
 
   # Human-readable description
