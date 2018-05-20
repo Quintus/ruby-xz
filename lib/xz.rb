@@ -39,7 +39,7 @@ require "forwardable"
 # the classes defined in it are encoded in BINARY, so you may have to
 # call #force_encoding on them to tag them with the correct encoding
 # (assuming you _know_ what their correct encoding should be).
-# ruby-xz can’t handle this as compiled strings don’t come with
+# ruby-xz can’t handle this as compressed strings don’t come with
 # encoding information.
 module XZ
 
@@ -261,8 +261,8 @@ module XZ
     #
     # === Example
     #
-    #   XZ.compress("myfile.txt", "myfile.txt.xz")
-    #   XZ.compress("myarchive.tar", "myarchive.tar.xz")
+    #   XZ.compress_file("myfile.txt", "myfile.txt.xz")
+    #   XZ.compress_file("myarchive.tar", "myarchive.tar.xz")
     #
     # === Remarks
     #
@@ -351,8 +351,8 @@ module XZ
     #
     # === Example
     #
-    #   XZ.decompres("myfile.txt.xz", "myfile.txt")
-    #   XZ.decompress("myarchive.tar.xz", "myarchive.tar")
+    #   XZ.decompress_file("myfile.txt.xz", "myfile.txt")
+    #   XZ.decompress_file("myarchive.tar.xz", "myarchive.tar")
     #
     # === Remarks
     #

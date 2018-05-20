@@ -33,9 +33,8 @@
 # you to access XZ-compressed data the same way you access an
 # IO-object, easily allowing to fool other libraries that expect IO
 # objects. The most noticable example for this may be reading and
-# writing XZ-compressed tarballs using the archive-tar-minitar
-# RubyGem; see XZ::StreamReader and XZ::StreamWriter for respective
-# examples.
+# writing XZ-compressed tarballs using the minitar
+# RubyGem; see the README.md file for an example.
 #
 # Most of IO's methods are implemented in this class or one of the
 # subclasses. The most notable exception is that it is not possible

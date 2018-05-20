@@ -19,6 +19,7 @@ XZ::StreamReader and XZ::StreamWriter classes for more information on this.
 **Note**: Version 1.0.0 breaks the API of the XZ::StreamReader and
 XZ::StreamWriter classes. If you used them, you will need to adapt
 your code. The API now behaves like Ruby's own zlib library does.
+See the HISTORY.rdoc file for a list of breaking changes.
 
 Installation
 ------------
@@ -49,24 +50,21 @@ streams of data or just plain strings.
 
 You can read the documentation on your local gemserver, or browse it [online][2].
 
-### First step ###
+### Require ###
 
-You have to require ruby-xz. Note the file you have to require is named
-"xz.rb", so do
+You have to require the “xz.rb” file:
 
 ``` ruby
 require "xz"
 ```
 
-to get it.
-
 ### Examples ###
 
 ``` ruby
-# Compress a TAR archive
-XZ.compress_file("myfile.tar", "myfile.tar.xz")
+# Compress a file
+XZ.compress_file("myfile.txt", "myfile.txt.xz")
 # Decompress it
-XZ.decompress_file("myfile.tar.xz", "myfile.tar")
+XZ.decompress_file("myfile.txt.xz", "myfile.txt")
 
 # Compress everything you get from a socket (note that there HAS to be a EOF
 # sometime, otherwise this will run infinitely)
@@ -80,6 +78,29 @@ data = XZ.decompress(comp)
 
 Have a look at the XZ module's documentation for an in-depth description of
 what is possible.
+
+### Usage with the minitar gem ###
+
+ruby-xz can be used together with the [minitar][3] library (formerly
+“archive-tar-minitar”) to create XZ-compressed tarballs. This works by
+employing the IO-like classes XZ::StreamReader and XZ::StreamWriter
+analogous to how one would use Ruby's “zlib” library together with
+“minitar”. Example:
+
+``` ruby
+require "xz"
+require "minitar"
+
+# Create an XZ-compressed tarball
+XZ::StreamWriter.open("tarball.tar.xz") do |txz|
+  Minitar.pack("path/to/directory", txz)
+end
+
+# Unpack it again
+XZ::StreamReader.open("tarball.tar.xz") do |txz|
+  Minitar.unpack(txz, "path/to/target/directory")
+end
+```
 
 Links
 -----
@@ -95,3 +116,4 @@ MIT license; see LICENSE for the full license text.
 
 [1]: http://tukaani.org/xz/
 [2]: http://quintus.github.io/ruby-xz
+[3]: https://github.com/halostatue/minitar

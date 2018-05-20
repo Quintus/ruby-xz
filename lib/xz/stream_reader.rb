@@ -35,35 +35,62 @@
 # the compressed data from; you can either pass this IO object directly
 # to the ::new method, effectively allowing you to pass any IO-like thing
 # you can imagine (just ensure it is readable), or you can pass a path
-# to a filename to ::open, in which case StreamReader takes care of both
-# opening and closing the file correctly.
-#
-# The wrapped IO object is automatically closed always correctly if
-# you use the block-form instanciation, regardless of whether you
-# passed a filename or an IO instance. To prevent that, call #finish,
-# which will clear liblzma's buffers but leave the wrapped IO object
-# open.
-#
-# ==Example
-# In this example, we’re going to use ruby-xz together with the
-# +archive-tar-minitar+ gem that allows to read tarballs. Used
-# together, the two libraries allow us to read XZ-compressed tarballs.
-#
-#   require "xz"
-#   require "archive/tar/minitar"
-#
-#   XZ::StreamReader.open("foo.tar.xz") do |txz|
-#     # This automatically closes txz
-#     Archive::Tar::Minitar.unpack(txz, "foo")
-#   end
+# to a file to ::open, in which case StreamReader will open the path
+# using Ruby's File class internally. If you use ::open's block form,
+# the method will take care of properly closing both the liblzma
+# stream and the File instance correctly.
 #
 # Note that anything read from a StreamReader instance will *always* be
 # tagged with the BINARY encoding. If that isn't what you want, you
 # will need to call String#force_encoding on your received data.
 class XZ::StreamReader < XZ::Stream
 
+  # Decompression options.
   attr_reader :options
 
+  # call-seq:
+  #   open(filename [, options]) → stream_reader
+  #   open(filename [, options]){|sr| ...} → stream_reader
+  #
+  # Open the given file and wrap a new instance around it with ::new.
+  # If you use the block form, both the internally created File instance
+  # and the liblzma stream will be closed automatically for you.
+  #
+  # === Parameters
+  # [filename]
+  #   Path to the file to open.
+  # [options]
+  #   Optional hash with further options; see ::new for possible parameters.
+  # [sr (block argument)]
+  #   The created StreamReader instance.
+  #
+  # === Return value
+  # The newly created instance.
+  #
+  # === Remarks
+  # Starting with version 1.0.0, the block form also returns the newly
+  # created instance rather than the block's return value. This is
+  # in line with Ruby's own GzipReader.open API.
+  #
+  # === Example
+  #     # Normal usage
+  #     XZ::StreamReader.open("myfile.txt.xz") do |xz|
+  #       puts xz.read #=> I love Ruby
+  #     end
+  #
+  #     # If you really need the File instance created internally:
+  #     file = nil
+  #     XZ::StreamReader.open("myfile.txt.xz") do |xz|
+  #       puts xz.read #=> I love Ruby
+  #       file = xz.finish # prevents closing
+  #     end
+  #     file.close # Now close it manually
+  #
+  #     # Or just don't use the block form:
+  #     xz = XZ::StreamReader.open("myfile.txt.xz")
+  #     puts xz.read #=> I love Ruby
+  #     file = xz.finish
+  #     file.close # Don't forget to close it manually (or use xz.close instead of xz.finish above).
   def self.open(filename, options = {})
     file = File.open(filename, "rb")
     reader = new(file, options)
@@ -80,6 +107,56 @@ class XZ::StreamReader < XZ::Stream
     reader
   end
 
+  # Creates a new instance that is wrapped around the given IO object.
+  #
+  # === Parameters
+  # [delegate_io]
+  #   The underlying IO object to read the compressed data from.
+  #   This IO object has to have been opened in binary mode,
+  #   otherwise you are likely to receive exceptions indicating
+  #   that the compressed data is corrupt.
+  # [options]
+  #   This is a hash of further options with the following parameters.
+  #
+  #   [:memory_limit (+UINT64_MAX+)]
+  #     If not XZ::LibLZMA::UINT64_MAX, makes liblzma
+  #     use no more memory than +memory_limit+ bytes.
+  #   [:flags (<tt>[:tell_unsupported_check]</tt>)]
+  #     Additional flags
+  #     passed to liblzma (an array). Possible flags are:
+  #
+  #     [:tell_no_check]
+  #       Spit out a warning if the archive hasn't an
+  #       integrity checksum.
+  #     [:tell_unsupported_check]
+  #       Spit out a warning if the archive
+  #       has an unsupported checksum type.
+  #     [:concatenated]
+  #       Decompress concatenated archives.
+  #
+  # === Return value
+  # The newly created instance.
+  #
+  # === Remarks
+  # This method used to accept a block in earlier versions. Since version 1.0.0,
+  # this behaviour has been removed to synchronise the API with Ruby's own
+  # GzipReader.open.
+  #
+  # This method doesn't close the underlying IO or the liblzma stream.
+  # You need to call #finish or #close manually; see ::open for a method
+  # that takes a block to automate this.
+  #
+  # === Example
+  #     file = File.open("compressed.txt.xz", "rb") # Note binary mode
+  #     xz = XZ::StreamReader.open(file)
+  #     puts xz.read #=> I love Ruby
+  #     xz.close # closes both `xz' and `file'
+  #
+  #     file = File.open("compressed.txt.xz", "rb") # Note binary mode
+  #     xz = XZ::StreamReader.open(file)
+  #     puts xz.read #=> I love Ruby
+  #     xz.finish # closes only `xz'
+  #     file.close # Now close `file' manually
   def initialize(delegate_io, options = {})
     super(delegate_io)
     options[:memory_limit] ||= XZ::LibLZMA::UINT64_MAX

@@ -57,22 +57,66 @@
 # *NOTE*: Using #finish inside the +open+ method's block allows
 # you to continue using that writer's File instance as it is
 # returned by #finish.
-#
-# == Example
-#
-# Together with the <tt>archive-tar-minitar</tt> gem, this library
-# can be used to create XZ-compressed TAR archives (these commonly
-# use a file extension of <tt>.tar.xz</tt> or rarely <tt>.txz</tt>).
-#
-#   XZ::StreamWriter.open("foo.tar.xz") do |txz|
-#     # This automatically closes txz
-#     Archive::Tar::Minitar.pack("foo", txz)
-#   end
 class XZ::StreamWriter < XZ::Stream
 
+  # Compression level used for this writer (set on instanciation).
   attr_reader :level
+  # Compression options used for this writer (set on instanciation).
   attr_reader :options
 
+  # call-seq:
+  #   open(filename [, compression_level = 6 [, options ]]) → stream_writer
+  #   open(filename [, compression_level = 6 [, options ]]){|sw| ...} → stream_writer
+  #
+  # Creates a new instance for writing to a compressed file. The File
+  # instance is opened internally and then wrapped via ::new. The
+  # block form automatically closes both the liblzma stream and the
+  # internal File instance in the correct order. The non-block form
+  # does neither, leaving it to you to call #finish or #close later.
+  #
+  # === Parameters
+  # [filename]
+  #   The file to open.
+  # [sw (block argument)]
+  #   The created StreamWriter instance.
+  #
+  # See ::new for the other parameters.
+  #
+  # === Return value
+  # Returns the newly created instance.
+  #
+  # === Remarks
+  # Starting with version 1.0.0, the block form also returns the newly
+  # created instance rather than the block's return value. This is
+  # in line with Ruby's own GzipWriter.open API.
+  #
+  # === Example
+  #     # Normal usage
+  #     XZ::StreamWriter.open("myfile.txt.xz") do |xz|
+  #       xz.puts "Compress this line"
+  #       xz.puts "And this line as well"
+  #     end
+  #
+  #     # If for whatever reason you want to do something else with
+  #     # the internally opened file:
+  #     file = nil
+  #     XZ::StreamWriter.open("myfile.txt.xz") do |xz|
+  #       xz.puts "Compress this line"
+  #       xz.puts "And this line as well"
+  #       file = xz.finish
+  #     end
+  #     # At this point, the liblzma stream has been closed, but `file'
+  #     # now contains the internally created File instance, which is
+  #     # still open. Don't forget to close it yourself at some point
+  #     # to flush it.
+  #     file.close
+  #
+  #     # Or just don't use the block form:
+  #     xz = StreamWriter.open("myfile.txt.xz")
+  #     xz.puts "Compress this line"
+  #     xz.puts "And this line as well"
+  #     file = xz.finish
+  #     file.close # Don't forget to close it manually (or use xz.close instead of xz.finish above)
   def self.open(filename, compression_level = 6, options = {})
     file = File.open(filename, "wb")
     writer = new(file, compression_level, options)
@@ -91,6 +135,58 @@ class XZ::StreamWriter < XZ::Stream
     writer
   end
 
+  # Creates a new instance that is wrapped around the given IO instance.
+  #
+  # === Parameters
+  # [delegate_io]
+  #   The IO instance to wrap. It has to be opened in binary mode,
+  #   otherwise the data it writes to the hard disk will be corrupt.
+  # [compression_level (6)]
+  #   Compression strength. Higher values indicate a
+  #   smaller result, but longer compression time. Maximum
+  #   is 9.
+  # [options]
+  #   This is a hash of further options as per the following parameters:
+  #
+  #   [:check (:crc64)]
+  #     The checksum algorithm to use for verifying
+  #     the data inside the archive. Possible values are:
+  #     * :none
+  #     * :crc32
+  #     * :crc64
+  #     * :sha256
+  #   [:extreme (false)]
+  #     Tries to get the last bit out of the
+  #     compression. This may succeed, but you can end
+  #     up with *very* long computation times.
+  #
+  # === Return value
+  # Returns the newly created instance.
+  #
+  # === Remarks
+  # This method does not close the underlying IO nor does it automatically
+  # flush libzlma. You'll need to do that manually using #close or #finish.
+  # See ::open for a method that supports a block with auto-closing.
+  #
+  # This method used to accept a block in earlier versions. This
+  # behaviour has been removed in version 1.0.0 to synchronise the API
+  # with Ruby's own GzipWriter.new.
+  #
+  # === Example
+  #     # Normal usage:
+  #     file = File.open("myfile.txt.xz", "wb") # Note binary mode
+  #     xz = XZ::StreamWriter.new(file)
+  #     xz.puts("Compress this line")
+  #     xz.puts("And this second line")
+  #     xz.close # Closes both the libzlma stream and `file'
+  #
+  #     # Expressly closing the delegate IO manually:
+  #     File.open("myfile.txt.xz", "wb") do |file| # Note binary mode
+  #       xz = XZ::StreamWriter.new(file)
+  #       xz.puts("Compress this line")
+  #       xz.puts("And this second line")
+  #       xz.finish # Flushes libzlma, but keeps `file' open.
+  #     end # Here, `file' is closed.
   def initialize(delegate_io, compression_level = 6, options = {})
     super(delegate_io)
     options[:check]   ||= :crc64
