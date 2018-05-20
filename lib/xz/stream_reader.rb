@@ -41,12 +41,12 @@
 # stream and the File instance correctly.
 class XZ::StreamReader < XZ::Stream
 
-  # Decompression options.
-  attr_reader :options
+  # The memory limit configured for this lzma decoder.
+  attr_reader :memory_limit
 
   # call-seq:
-  #   open(filename [, options]) → stream_reader
-  #   open(filename [, options]){|sr| ...} → stream_reader
+  #   open(filename [, kw]) → stream_reader
+  #   open(filename [, kw]){|sr| ...} → stream_reader
   #
   # Open the given file and wrap a new instance around it with ::new.
   # If you use the block form, both the internally created File instance
@@ -55,10 +55,10 @@ class XZ::StreamReader < XZ::Stream
   # === Parameters
   # [filename]
   #   Path to the file to open.
-  # [options]
-  #   Optional hash with further options; see ::new for possible parameters.
   # [sr (block argument)]
   #   The created StreamReader instance.
+  #
+  # See ::new for a description of the keyword parameters.
   #
   # === Return value
   # The newly created instance.
@@ -87,9 +87,9 @@ class XZ::StreamReader < XZ::Stream
   #     puts xz.read #=> I love Ruby
   #     file = xz.finish
   #     file.close # Don't forget to close it manually (or use xz.close instead of xz.finish above).
-  def self.open(filename, options = {})
+  def self.open(filename, **args)
     file = File.open(filename, "rb")
-    reader = new(file, options)
+    reader = new(file, **args)
 
     if block_given?
       begin
@@ -106,38 +106,38 @@ class XZ::StreamReader < XZ::Stream
   # Creates a new instance that is wrapped around the given IO object.
   #
   # === Parameters
+  # ==== Positional parameters
   # [delegate_io]
   #   The underlying IO object to read the compressed data from.
   #   This IO object has to have been opened in binary mode,
   #   otherwise you are likely to receive exceptions indicating
   #   that the compressed data is corrupt.
-  # [options]
-  #   This is a hash of further options with the following parameters.
   #
-  #   [:memory_limit (+UINT64_MAX+)]
-  #     If not XZ::LibLZMA::UINT64_MAX, makes liblzma
-  #     use no more memory than +memory_limit+ bytes.
-  #   [:flags (<tt>[:tell_unsupported_check]</tt>)]
-  #     Additional flags
-  #     passed to liblzma (an array). Possible flags are:
+  # ==== Keyword arguments
+  # [memory_limit (+UINT64_MAX+)]
+  #   If not XZ::LibLZMA::UINT64_MAX, makes liblzma
+  #   use no more memory than +memory_limit+ bytes.
+  # [flags (<tt>[:tell_unsupported_check]</tt>)]
+  #   Additional flags passed to liblzma (an array).
+  #   Possible flags are:
   #
-  #     [:tell_no_check]
-  #       Spit out a warning if the archive hasn't an
-  #       integrity checksum.
-  #     [:tell_unsupported_check]
-  #       Spit out a warning if the archive
-  #       has an unsupported checksum type.
-  #     [:concatenated]
-  #       Decompress concatenated archives.
-  #   [:external_encoding (Encoding.default_external)]
-  #     Assume the decompressed data inside the XZ is encoded in
-  #     this encoding. Defaults to Encoding.default_external,
-  #     which in turn defaults to the environment.
-  #   [:internal_encoding (Encoding.default_internal)]
-  #     Request that the data found in the XZ file (which is assumed
-  #     to be in the encoding specified by +external_encoding+) to
-  #     be transcoded into this encoding. Defaults to Encoding.default_internal,
-  #     which defaults to nil, which means to not transcode anything.
+  #   [:tell_no_check]
+  #     Spit out a warning if the archive hasn't an
+  #     integrity checksum.
+  #   [:tell_unsupported_check]
+  #     Spit out a warning if the archive
+  #     has an unsupported checksum type.
+  #   [:concatenated]
+  #     Decompress concatenated archives.
+  # [external_encoding (Encoding.default_external)]
+  #   Assume the decompressed data inside the XZ is encoded in
+  #   this encoding. Defaults to Encoding.default_external,
+  #   which in turn defaults to the environment.
+  # [internal_encoding (Encoding.default_internal)]
+  #   Request that the data found in the XZ file (which is assumed
+  #   to be in the encoding specified by +external_encoding+) to
+  #   be transcoded into this encoding. Defaults to Encoding.default_internal,
+  #   which defaults to nil, which means to not transcode anything.
   #
   # === Return value
   # The newly created instance.
@@ -166,31 +166,29 @@ class XZ::StreamReader < XZ::Stream
   #     puts xz.read #=> I love Ruby
   #     xz.finish # closes only `xz'
   #     file.close # Now close `file' manually
-  def initialize(delegate_io, options = {})
+  def initialize(delegate_io, memory_limit: XZ::LibLZMA::UINT64_MAX, flags: [:tell_unsupported_check], external_encoding: nil, internal_encoding: nil)
     super(delegate_io)
-    options[:memory_limit] ||= XZ::LibLZMA::UINT64_MAX
-    options[:flags] ||= [:tell_unsupported_check]
-    raise(ArgumentError, "When specifying the internal encoding, the external encoding must also be specified") if options[:internal_encoding] && !options[:external_encoding]
-    raise(ArgumentError, "Invalid memory limit set!") unless options[:memory_limit] > 0 && options[:memory_limit] <= XZ::LibLZMA::UINT64_MAX
+    raise(ArgumentError, "When specifying the internal encoding, the external encoding must also be specified") if internal_encoding && !external_encoding
+    raise(ArgumentError, "Memory limit out of range") unless memory_limit > 0 && memory_limit <= XZ::LibLZMA::UINT64_MAX
 
-    @options = options.freeze
+    @memory_limit = memory_limit
     @readbuf = String.new
     @readbuf.force_encoding(Encoding::BINARY)
 
-    if options[:external_encoding]
+    if external_encoding
       encargs = []
-      encargs << options[:external_encoding]
-      encargs << options[:internal_encoding] if options[:internal_encoding]
+      encargs << external_encoding
+      encargs << internal_encoding if internal_encoding
       set_encoding(*encargs)
     end
 
-    @allflags = options[:flags].reduce(0) do |val, flag|
+    @allflags = flags.reduce(0) do |val, flag|
       flag = XZ::LibLZMA::LZMA_DECODE_FLAGS[flag] || raise(ArgumentError, "Unknown flag #{flag}")
       val | flag
     end
 
     res = XZ::LibLZMA.lzma_stream_decoder(@lzma_stream.to_ptr,
-                                      @options[:memory_limit],
+                                      @memory_limit,
                                       @allflags)
     XZ::LZMAError.raise_if_necessary(res)
   end
@@ -277,7 +275,7 @@ class XZ::StreamReader < XZ::Stream
 
     @readbuf.clear
     res = XZ::LibLZMA.lzma_stream_decoder(@lzma_stream.to_ptr,
-                                      @options[:memory_limit],
+                                      @memory_limit,
                                       @allflags)
     XZ::LZMAError.raise_if_necessary(res)
 

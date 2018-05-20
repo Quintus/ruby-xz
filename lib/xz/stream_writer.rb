@@ -61,8 +61,8 @@ class XZ::StreamWriter < XZ::Stream
 
   # Compression level used for this writer (set on instanciation).
   attr_reader :level
-  # Compression options used for this writer (set on instanciation).
-  attr_reader :options
+  # Checksum algorithm in use.
+  attr_reader :check
 
   # call-seq:
   #   open(filename [, compression_level = 6 [, options ]]) → stream_writer
@@ -117,9 +117,9 @@ class XZ::StreamWriter < XZ::Stream
   #     xz.puts "And this line as well"
   #     file = xz.finish
   #     file.close # Don't forget to close it manually (or use xz.close instead of xz.finish above)
-  def self.open(filename, compression_level = 6, options = {})
+  def self.open(filename, **args)
     file = File.open(filename, "wb")
-    writer = new(file, compression_level, options)
+    writer = new(file, **args)
 
     if block_given?
       begin
@@ -138,31 +138,31 @@ class XZ::StreamWriter < XZ::Stream
   # Creates a new instance that is wrapped around the given IO instance.
   #
   # === Parameters
+  # ==== Positional parameters
   # [delegate_io]
   #   The IO instance to wrap. It has to be opened in binary mode,
   #   otherwise the data it writes to the hard disk will be corrupt.
+  #
+  # ==== Keyword arguments
   # [compression_level (6)]
   #   Compression strength. Higher values indicate a
   #   smaller result, but longer compression time. Maximum
   #   is 9.
-  # [options]
-  #   This is a hash of further options as per the following parameters:
-  #
-  #   [:check (:crc64)]
-  #     The checksum algorithm to use for verifying
-  #     the data inside the archive. Possible values are:
-  #     * :none
-  #     * :crc32
-  #     * :crc64
-  #     * :sha256
-  #   [:extreme (false)]
-  #     Tries to get the last bit out of the
-  #     compression. This may succeed, but you can end
-  #     up with *very* long computation times.
-  #   [:external_encoding (Encoding.default_external)]
-  #     Transcode to this encoding when writing. Defaults
-  #     to Encoding.default_external, which by default is
-  #     set from the environment.
+  # [:check (:crc64)]
+  #   The checksum algorithm to use for verifying
+  #   the data inside the archive. Possible values are:
+  #   * :none
+  #   * :crc32
+  #   * :crc64
+  #   * :sha256
+  # [:extreme (false)]
+  #   Tries to get the last bit out of the
+  #   compression. This may succeed, but you can end
+  #   up with *very* long computation times.
+  # [:external_encoding (Encoding.default_external)]
+  #   Transcode to this encoding when writing. Defaults
+  #   to Encoding.default_external, which by default is
+  #   set from the environment.
   #
   # === Return value
   # Returns the newly created instance.
@@ -191,24 +191,21 @@ class XZ::StreamWriter < XZ::Stream
   #       xz.puts("And this second line")
   #       xz.finish # Flushes libzlma, but keeps `file' open.
   #     end # Here, `file' is closed.
-  def initialize(delegate_io, compression_level = 6, options = {})
+  def initialize(delegate_io, level: 6, check: :crc64, extreme: false, external_encoding: nil)
     super(delegate_io)
-    options[:check]   ||= :crc64
-    options[:extreme] ||= false
 
-    raise(ArgumentError, "Invalid compression level!")  unless (0..9).include?(compression_level)
-    raise(ArgumentError, "Invalid checksum specified!") unless [:none, :crc32, :crc64, :sha256].include?(options[:check])
+    raise(ArgumentError, "Invalid compression level!")  unless (0..9).include?(level)
+    raise(ArgumentError, "Invalid checksum specified!") unless [:none, :crc32, :crc64, :sha256].include?(check)
 
-    set_encoding(options[:external_encoding]) if options[:external_encoding]
+    set_encoding(external_encoding) if external_encoding
 
-    @level    = compression_level
-    @options  = options.freeze
-
-    @level |= LibLZMA::LZMA_PRESET_EXTREME if @options[:extreme]
+    @check  = check
+    @level  = level
+    @level |= LibLZMA::LZMA_PRESET_EXTREME if extreme
 
     res = XZ::LibLZMA.lzma_easy_encoder(@lzma_stream.to_ptr,
                                     @level,
-                                    XZ::LibLZMA.const_get(:"LZMA_CHECK_#{options[:check].upcase}"))
+                                    XZ::LibLZMA.const_get(:"LZMA_CHECK_#{@check.upcase}"))
     XZ::LZMAError.raise_if_necessary(res)
   end
 
@@ -254,7 +251,7 @@ class XZ::StreamWriter < XZ::Stream
 
     res = XZ::LibLZMA.lzma_easy_encoder(@lzma_stream.to_ptr,
                                     @level,
-                                    XZ::LibLZMA.const_get(:"LZMA_CHECK_#{options[:check].upcase}"))
+                                    XZ::LibLZMA.const_get(:"LZMA_CHECK_#{@check.upcase}"))
     XZ::LZMAError.raise_if_necessary(res)
 
     0 # Mimic IO#rewind's return value

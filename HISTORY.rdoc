@@ -14,6 +14,17 @@
   return the new instance, even if a block is given to the method
   (previous behaviour was to return the return value of the block).
   This is part of the syncing with Ruby's zlib API.
+* *BreakingChange* StreamReader.new and StreamWriter.new as well as
+  the ::open variants take additional arguments as real Ruby keyword
+  arguments now instead of a long parameter list plus options hash.
+  This is different from Ruby's own zlib API as that one takes both
+  a long parameter list and a hash of additional options. ruby-xz
+  is meant to follow zlib's semantics mostly, but not as a drop-in
+  replacement, so this divergence from zlib's API is okay (also
+  given that it isn't possible to replicate all possible options
+  1:1 anyway, since liblzma simply accepts different options as
+  libz). If you've never used these methods' optional arguments,
+  you should be fine.
 * *BreakingChange* Stream#close now returns nil instead of the
   number of bytes written. This syncs Stream#close with Ruby's
   own IO#close, which also returns nil.
