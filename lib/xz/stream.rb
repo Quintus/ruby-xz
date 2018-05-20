@@ -264,13 +264,15 @@ class XZ::Stream
 
     # Clean `args' to [external_encoding, internal_encoding],
     # and @transcode_options.
-    return set_encoding($`, $', *args[1..-1]) if args.args[0].to_str =~ /:/
+    return set_encoding($`, $', *args[1..-1]) if args[0].respond_to?(:to_str) && args[0].to_str =~ /:/
     @transcode_options = args.delete_at(-1) if args[-1].kind_of?(Hash)
 
     # `args' is always [external, internal] or [external] at this point
     @external_encoding = args[0].kind_of?(Encoding) ? args[0] : Encoding.find(args[0])
     if args[1]
       @internal_encoding = args[1].kind_of?(Encoding) ? args[1] : Encoding.find(args[1])
+    else
+      @internal_encoding = Encoding.default_internal # Encoding.default_internal defaults to nil
     end
 
     self
