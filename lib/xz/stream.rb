@@ -118,7 +118,7 @@ class XZ::Stream
       pos = 0
       until pos > str.bytesize # Do not use >=, that conflicts with #lzma_finish
         substr = str[pos, XZ::CHUNK_SIZE]
-        @input_buffer_p[0, str.bytesize] = substr
+        @input_buffer_p[0, substr.bytesize] = substr
         pos += XZ::CHUNK_SIZE
 
         @lzma_stream.next_in  = @input_buffer_p
