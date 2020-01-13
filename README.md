@@ -103,9 +103,8 @@ end
 Links
 -----
 
-* Website: https://mg.guelker.eu/projects/ruby-xz/
-* Online documentation: https://mg.guelker.eu/projects/ruby-xz/doc
-* Code repository: https://git.guelker.eu/?p=ruby-xz.git;a=summary
+* Online documentation: https://rubydoc.info/gems/ruby-xz
+* Code repository: https://github.com/Quintus/ruby-xz
 * Issue tracker: https://github.com/Quintus/ruby-xz/issues
 
 License
