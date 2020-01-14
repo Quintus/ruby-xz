@@ -169,8 +169,8 @@ module XZ
       when LibLZMA::LZMA_FORMAT_ERROR   then raise(self, "Unrecognized file format!")
       when LibLZMA::LZMA_OPTIONS_ERROR  then raise(self, "Invalid options passed!")
       when LibLZMA::LZMA_DATA_ERROR     then raise(self, "Archive is currupt.")
-      when LibLZMA::LZMA_BUF_ERROR      then raise(self, "Buffer unusable!")
       when LibLZMA::LZMA_PROG_ERROR     then raise(self, "Program error--if you're sure your code is correct, you may have found a bug in liblzma.")
+      when LibLZMA::LZMA_BUF_ERROR      then # ignore BUF_ERROR since it's not really an error
       end
     end
 
