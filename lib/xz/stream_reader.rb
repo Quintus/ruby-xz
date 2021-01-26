@@ -250,7 +250,7 @@ class XZ::StreamReader < XZ::Stream
       # Now, transcode it to the internal encoding if that was requested.
       # Otherwise return it with the external encoding as-is.
       if @internal_encoding
-        @readbuf.encode!(@internal_encoding, @transcode_options)
+        @readbuf.encode!(@internal_encoding, **@transcode_options)
         outbuf.force_encoding(@internal_encoding)
       else
         outbuf.force_encoding(@external_encoding)
