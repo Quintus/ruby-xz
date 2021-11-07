@@ -1,3 +1,10 @@
+Unmaintained
+============
+
+As of 2021, I need to abandon this project. I have moved on to other
+things and cannot maintain it any further. Please fork it if you want
+to further use it.
+
 ruby-xz
 =======
 
