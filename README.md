@@ -1,9 +1,15 @@
-Unmaintained
-============
+Project has new maintainer
+==========================
 
-As of 2021, I need to abandon this project. I have moved on to other
-things and cannot maintain it any further. Please fork it if you want
-to further use it.
+As of 2021, I needed to abandon this project. I moved on to other
+things and was unable maintain it any further. Luckily, GitHub user
+@win93 has kindly taken over maintenance over ruby-xz. The new
+repository for ruby-xz is here: https://github.com/win93/ruby-xz
+Please file any tickets or pull request at that repository. @win93 has
+also taken over the **ruby-xz** RubyGem with my permission.
+
+This repository only remains for historical and archival purposes.
+Thanks to @win93 for taking over **ruby-xz.**
 
 ruby-xz
 =======
